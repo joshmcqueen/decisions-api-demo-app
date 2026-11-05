@@ -1,0 +1,44 @@
+{
+  "generatedOn": "2026-11-05",
+  "model": "gpt-image-2.6-sunburst",
+  "tool": "imagegen skill CLI via OpenAI Images API",
+  "size": "1024x1024",
+  "quality": "medium",
+  "billablePreparationCostUsd": null,
+  "note": "Actual image-generation billable usage was not retained by the CLI. These are synthetic assets, not photographs of real products. Every output was visually inspected.",
+  "assets": [
+    {
+      "file": "headphones-black.png",
+      "operation": "generate",
+      "prompt": "Use case: product-mockup. A photorealistic premium ecommerce studio photograph of a single pair of original generic over-ear wireless headphones, matte black exterior, thick softly padded oval black earcups, broad softly curved adjustable headband, minimal unbranded design. Standing upright at a three-quarter angle, complete product fully visible, centered and filling most of a square frame, soft diffuse studio light, crisp realistic materials, white seamless background with only a small natural contact shadow. No text, logos, graphic overlays, watermarks, people, props, cables, or packaging. Not a recognizable branded design. Fictional Amazon listing demo product."
+    },
+    {
+      "file": "headphones-cream.png",
+      "operation": "edit",
+      "reference": "headphones-black.png",
+      "prompt": "Use case: precise-object-edit. Edit this fictional product photo. Change ONLY the headphone exterior, headband padding, and earcup cushions from matte black to warm ivory cream, including the inside padding. Preserve the exact shape, camera angle, product geometry, small buttons, seams, port, framing, white background, natural contact shadow, and lighting. Do not add any text, logos, graphics, accessories, or watermarks. Deliver a photorealistic ecommerce photo of the same headphones in a visibly cream colorway."
+    },
+    {
+      "file": "coffee-clean.png",
+      "operation": "generate",
+      "prompt": "Use case: product-mockup. A photorealistic ecommerce studio product photograph of an original generic compact eight-cup filter-basket drip coffee maker. Sage green main body with black trim, visible upper filter basket housing and water reservoir, clear glass carafe with black handle on a circular warming plate below the brewing spout. One small simple black on-off switch, no display. Not an espresso machine: no steam wand, no espresso portafilter, no pressure gauge. Complete appliance fully visible at a three-quarter angle, centered and filling most of square frame, plain seamless white background and small soft natural contact shadow, crisp realistic material, polished soft studio lighting. No text, logos, added graphics, watermarks, people, cups, beans, props, packaging, or cord. Fictional product."
+    },
+    {
+      "file": "coffee-lifestyle.png",
+      "operation": "edit",
+      "reference": "coffee-clean.png",
+      "prompt": "Use case: precise-object-edit. Keep this EXACT sage green and black drip coffee maker, including its glass carafe, proportions, top filter-basket housing, switch, and camera angle. Replace only the empty white studio background with a tasteful warm home kitchen setting: light oak countertop, softly blurred cream tile backsplash, a small leafy plant far in the background. Product remains prominent, fully visible, and photorealistic. Preserve color and geometry. Natural soft morning lighting. No espresso components, no text, no logos, no overlays or watermarks. This is an intentionally lifestyle main-image variant of the same fictional product."
+    },
+    {
+      "file": "plush-clean.png",
+      "operation": "generate",
+      "prompt": "Use case: product-mockup. A photorealistic premium ecommerce studio photograph of one adorable original axolotl plush toy. Lavender soft velvety body, three fluffy pink external gill fronds on each side of head, tiny embroidered dark eyes and a simple embroidered curved smile, four stubby little feet, visible long tapered lavender tail curving gently beside body. Charming distinctive stuffed animal, tactile fabric and neat seams. Complete single toy fully visible at a three-quarter angle, centered and filling most of square frame, plain seamless white background with a small natural contact shadow, soft studio lighting, accurate lavender and pink colors. No text, logos, watermarks, badges, added graphics, people, props, or packaging. Fictional product."
+    },
+    {
+      "file": "plush-promo.png",
+      "operation": "edit",
+      "reference": "plush-clean.png",
+      "prompt": "Use case: precise-object-edit. Preserve this exact lavender axolotl plush toy with pink fluffy gills and the plain white background, camera angle, product geometry, lighting, and natural contact shadow. Add ONE obvious flat coral pink rounded rectangular promotional badge in the empty white space above the plush, containing the exact text \"BEST GIFT!\" in bold clear white uppercase sans-serif lettering. Do not cover the plush. Badge should be clearly an added marketing graphic, not a physical part of the toy. Keep the rest of the image unchanged. No other copy or logos. This is an intentionally flawed main-image example for a listing checker demo."
+    }
+  ]
+}
