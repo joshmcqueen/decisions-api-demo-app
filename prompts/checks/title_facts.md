@@ -1,0 +1,1 @@
+TEXT-ONLY CHECK: ignore the photograph entirely. Does the title agree with the reference product facts? Match if its stated product type, color, and features do not contradict those facts; mismatch for an explicit textual contradiction; insufficient_evidence if it cannot be assessed. A wrong-color photograph does not make this text-only check a mismatch.

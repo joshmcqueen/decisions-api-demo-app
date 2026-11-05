@@ -3,8 +3,8 @@ import type { Asset, CheckId, Fixture, Outcome, Product } from '../shared/domain
 export const assets: Asset[] = [
   { id: 'headphones-black', productId: 'headphones', label: 'Midnight black', file: 'headphones-black.png' },
   { id: 'headphones-cream', productId: 'headphones', label: 'Warm cream', file: 'headphones-cream.png' },
-  { id: 'coffee-clean', productId: 'coffee', label: 'Studio photo', file: 'coffee-clean.png' },
-  { id: 'coffee-lifestyle', productId: 'coffee', label: 'Kitchen setting', file: 'coffee-lifestyle.png' },
+  { id: 'coffee-clean', productId: 'coffee', label: 'Studio photo', file: 'coffee-clean-red.png' },
+  { id: 'coffee-lifestyle', productId: 'coffee', label: 'Kitchen setting', file: 'coffee-lifestyle-red.png' },
   { id: 'plush-clean', productId: 'plush', label: 'Clean product photo', file: 'plush-clean.png' },
   { id: 'plush-promo', productId: 'plush', label: 'Promotional overlay', file: 'plush-promo.png' },
 ];
@@ -17,9 +17,9 @@ export const products: Product[] = [
     imageIds: ['headphones-black', 'headphones-cream'], thumbnail: 'headphones-black',
   },
   {
-    id: 'coffee', name: 'Daily Drip Coffee Maker', brand: 'COMMON', category: 'Home & Kitchen', sku: 'COM-D08-SAGE',
-    facts: { 'Product type': 'Drip coffee maker', Color: 'Sage green with black trim', Capacity: '8-cup glass carafe', 'Brewing method': 'Filter-basket drip brewing only', 'Espresso function': 'Not supported; no pressure pump or espresso portafilter' },
-    title: 'COMMON Daily Drip Coffee Maker, 8-Cup Glass Carafe, Sage Green',
+    id: 'coffee', name: 'Daily Drip Coffee Maker', brand: 'COMMON', category: 'Home & Kitchen', sku: 'COM-D08-RED',
+    facts: { 'Product type': 'Drip coffee maker', Color: 'Cherry red with black trim', Capacity: '8-cup glass carafe', 'Brewing method': 'Filter-basket drip brewing only', 'Espresso function': 'Not supported; no pressure pump or espresso portafilter' },
+    title: 'COMMON Daily Drip Coffee Maker, 8-Cup Glass Carafe, Cherry Red',
     bullets: ['Daily brewing: Filter-basket drip brewing for your morning coffee', 'Easy serving: An 8-cup glass carafe with a comfortable handle', 'Simple controls: A single switch for straightforward drip brewing'],
     imageIds: ['coffee-clean', 'coffee-lifestyle'], thumbnail: 'coffee-clean',
   },

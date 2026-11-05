@@ -1,0 +1,1 @@
+Is the main image free from added promotional text, badges, watermarks, borders, or marketing graphics? A BEST GIFT! overlay is a mismatch. Small text or a brand mark physically on the product is acceptable for this narrow check. If unclear use insufficient_evidence.

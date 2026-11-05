@@ -1,6 +1,6 @@
-# Listing Checker
+# Listing Checker - Decisions API Demo
 
-**Helping sellers get listings right.** A local, independent interview demo using fictional product data and generated photos. Nothing is sent to Amazon or published.
+**Helping sellers get listings right.** A local Decisions API interview demo using fictional product data and generated photos. Nothing is sent to Amazon or published.
 
 ## Run
 
@@ -35,6 +35,10 @@ The Vite dev proxy expects the API on port 3001. If changing `PORT`, update `vit
 7. Under the comparison and repeat-run results, explore **The business case**. Choose a fictional volume scenario or enter annual new listings and checks per listing. The panel uses mean measured inference cost per approach to show annual spending and monthly, quarterly, and annual savings (or additional cost).
 
 The lifestyle coffee photo is an additional exploration option: it intentionally fails the white-background criterion. Corrections are manual, not AI-generated rewrites.
+
+## Edit prompts
+
+All prompts live in [`prompts/`](prompts/README.md): shared instructions, one Markdown file per check, outcome descriptions, the Responses template, and the image-generation archive. Edit and save a runtime prompt, then run another check; no restart or rebuild is required. Both engines use the shared definitions, and each run records a content-based prompt version. See the [prompt editing guide](prompts/README.md) for file roles and the fixed output values.
 
 ## What is being compared
 
@@ -72,7 +76,7 @@ These directional projections hold measured per-check costs constant across a ye
 
 ## Product images
 
-Six 1024×1024 PNGs are in `output/imagegen/`. All were generated or edited via the Images API with **`gpt-image-2.6-sunburst`**, medium quality. See [the complete prompt manifest](output/imagegen/manifest.json) for exact prompts, source images, and provenance. Generation took place before the demo; it is never included in listing-check timing.
+The six original 1024×1024 PNGs are in `output/imagegen/`. They were generated or edited via the Images API with **`gpt-image-2.6-sunburst`**, medium quality. Two 1254×1254 cherry-red coffee-maker edits were subsequently created with the built-in imagegen tool and are used by the app; the original green versions are retained for provenance. The coffee listing title, SKU, and reference color match the red images. See [the complete prompt manifest](prompts/images.json) for exact prompts, source images, and provenance. Generation took place before the demo; it is never included in listing-check timing.
 
 The bundled imagegen skill CLI was used, with `uv run --with openai --env-file .env python <imagegen-skill>/scripts/image_gen.py`. For a new generation, use `generate --model gpt-image-2.6-sunburst --size 1024x1024 --quality medium --prompt '<manifest prompt>' --out <new-path>`. For a controlled variant, use `edit` and add `--image <manifest reference>`. Save new outputs under a new filename; inspect identity, color, overlays, and background before using them. The manifest is the final prompt set, not model output used as ground truth.
 

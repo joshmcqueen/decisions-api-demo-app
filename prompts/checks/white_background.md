@@ -1,0 +1,1 @@
+Is the main product isolated against a plain white studio background? Soft natural contact shadows are acceptable. A kitchen, room, outdoor scene, or visibly colored background is a mismatch. Ignore promotional overlays for this question; assess the underlying backdrop only. This is an approximate presentation check, not exact pixel measurement.

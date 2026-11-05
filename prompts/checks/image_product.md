@@ -1,0 +1,1 @@
+Does the actual product visible in the photo have the product type and color stated in the reference facts and listing? Ignore filename, image label, background, and overlays for this question. Black and cream are different colors. Do not infer hidden functions or physical size from a photo. Use insufficient_evidence for unclear or obscured appearance.

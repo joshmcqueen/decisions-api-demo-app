@@ -10,7 +10,7 @@ import { performance } from 'node:perf_hooks';
 import { z } from 'zod';
 import { assets, products, fixtures, guidelines } from './catalog.ts';
 import { CHECK_IDS, DEFAULT_SETTINGS, EFFORTS, validSettings, type Check, type Run, type Settings } from '../shared/domain.ts';
-import { questions, choices, INSTRUCTIONS, QUESTION_VERSION, responseSchema } from './questions.ts';
+import { loadPrompts, PromptConfigurationError, responseSchema } from './questions.ts';
 import { agreement, estimateCost, fingerprint, normalizeDecisions, normalizeResponses, normalizeUsage, route } from './measurements.ts';
 
 const root = process.cwd();
@@ -23,7 +23,7 @@ const schema = z.object({
   settings: z.object({ model: z.enum(['gpt-6-luna','gpt-6.1-sol']), effort: z.enum(['none','low','medium','high']) }).optional(),
 }).strict();
 export interface Provider { decisions: { create: (...args: any[]) => Promise<any> }; responses: { create: (...args: any[]) => Promise<any> } }
-export function createApp(options: { clientFactory?: (key: string) => Provider; key?: string; imageLoader?: (file: string) => Buffer } = {}) {
+export function createApp(options: { clientFactory?: (key: string) => Provider; key?: string; imageLoader?: (file: string) => Buffer; promptsDirectory?: string } = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.use((req,res,next) => {
@@ -34,7 +34,14 @@ export function createApp(options: { clientFactory?: (key: string) => Provider; 
     next();
   });
   app.use(express.json({ limit: '32kb' }));
-  app.get('/api/config', (_req,res) => res.json({ keyConfigured: Boolean(options.key ?? environment().OPENAI_API_KEY), settings: DEFAULT_SETTINGS, efforts: EFFORTS, questionVersion: QUESTION_VERSION, questions, guidelines, assets: availableAssets() }));
+  app.get('/api/config', (_req,res) => {
+    try {
+      const prompts = loadPrompts(options.promptsDirectory);
+      res.json({ keyConfigured: Boolean(options.key ?? environment().OPENAI_API_KEY), settings: DEFAULT_SETTINGS, efforts: EFFORTS, questionVersion: prompts.version, questions: prompts.questions, guidelines, assets: availableAssets() });
+    } catch (error) {
+      res.status(503).json({ error: error instanceof PromptConfigurationError ? error.message : 'Could not load the prompt files.', code: 'INVALID_PROMPTS' });
+    }
+  });
   app.get('/api/fixtures', (_req,res) => res.json({ products, fixtures }));
   app.use('/products', express.static(assetDir, { dotfiles: 'deny', index: false }));
   app.post('/api/preflight', async (req,res) => {
@@ -52,11 +59,17 @@ export function createApp(options: { clientFactory?: (key: string) => Provider; 
     let image: Buffer;
     try { image = options.imageLoader ? options.imageLoader(asset.file) : readFileSync(path.join(assetDir, asset.file)); }
     catch { res.status(503).json({ error: 'This product photo has not been generated yet. See README.md for the Sunburst preparation commands.', code: 'MISSING_ASSET' }); return; }
+    let prompts: ReturnType<typeof loadPrompts>;
+    try { prompts = loadPrompts(options.promptsDirectory); }
+    catch (error) {
+      res.status(503).json({ error: error instanceof PromptConfigurationError ? error.message : 'Could not load the prompt files.', code: 'INVALID_PROMPTS' });
+      return;
+    }
     const evidence = { reference_product_facts: product.facts, submitted_listing: { title: listing.title, bullets: listing.bullets } };
     const fixture = fixtures.find(f => JSON.stringify(f.listing) === JSON.stringify(listing));
     const run: Run = {
       id: randomUUID(), engine, settings, model: settings.model, timestamp: new Date().toISOString(),
-      fingerprint: fingerprint({ evidence, image: createHash('sha256').update(image).digest('hex') }), questionVersion: QUESTION_VERSION,
+      fingerprint: fingerprint({ evidence, image: createHash('sha256').update(image).digest('hex') }), questionVersion: prompts.version,
       fixtureId: fixture?.id ?? null, listing, checks: [], status: 'error', sdkMs: null, usage: null, cost: null, raw: null, request: null,
     };
     if (fixture) run.expected = fixture.expected;
@@ -68,12 +81,12 @@ export function createApp(options: { clientFactory?: (key: string) => Provider; 
       const imagePart = { type: 'input_image' as const, image_url: `data:image/png;base64,${image.toString('base64')}`, detail: 'high' as const };
       const decisionsRequest: DecisionCreateParams = {
         model: settings.model,
-        input: [{ role: 'user', content: [{ type: 'input_text', text: INSTRUCTIONS }, { type: 'input_json', data: evidence }, imagePart] }],
-        questions: questions.map(q => ({ type: 'choice', ...q, choices })),
+        input: [{ role: 'user', content: [{ type: 'input_text', text: prompts.instructions }, { type: 'input_json', data: evidence }, imagePart] }],
+        questions: prompts.questions.map(q => ({ type: 'choice', ...q, choices: prompts.choices })),
       };
       const responsesRequest: ResponseCreateParamsNonStreaming = {
         model: settings.model, reasoning: { effort: settings.effort }, service_tier: 'default', store: false, max_output_tokens: 4096,
-        instructions: `${INSTRUCTIONS}\nCheck definitions:\n${JSON.stringify(questions)}\nOutcome definitions:\n${JSON.stringify(choices)}`,
+        instructions: prompts.responsesInstructions,
         input: [{ role: 'user', content: [{ type: 'input_text', text: JSON.stringify(evidence) }, imagePart] }],
         text: { format: { type: 'json_schema', name: 'listing_checks', strict: true, schema: responseSchema } },
       };

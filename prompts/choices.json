@@ -1,0 +1,14 @@
+[
+  {
+    "value": "match",
+    "description": "Evidence satisfies this check without a visible or explicit contradiction."
+  },
+  {
+    "value": "mismatch",
+    "description": "Evidence contains a visible or explicit contradiction or presentation issue for this check."
+  },
+  {
+    "value": "insufficient_evidence",
+    "description": "Evidence is unclear, missing, or does not allow this check to be decided."
+  }
+]

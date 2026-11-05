@@ -39,6 +39,24 @@
       "operation": "edit",
       "reference": "plush-clean.png",
       "prompt": "Use case: precise-object-edit. Preserve this exact lavender axolotl plush toy with pink fluffy gills and the plain white background, camera angle, product geometry, lighting, and natural contact shadow. Add ONE obvious flat coral pink rounded rectangular promotional badge in the empty white space above the plush, containing the exact text \"BEST GIFT!\" in bold clear white uppercase sans-serif lettering. Do not cover the plush. Badge should be clearly an added marketing graphic, not a physical part of the toy. Keep the rest of the image unchanged. No other copy or logos. This is an intentionally flawed main-image example for a listing checker demo."
+    },
+    {
+      "file": "coffee-clean-red.png",
+      "operation": "edit",
+      "reference": "coffee-clean.png",
+      "tool": "Built-in imagegen tool",
+      "model": null,
+      "size": "1254x1254",
+      "prompt": "Use case: precise-object-edit. Edit the attached fictional drip coffee maker product photograph. Change ONLY the sage green plastic body panels to a bold, rich cherry red. All green panels including the water reservoir side column, upper brew basket housing, and base must be red. Preserve EXACT product geometry, glass carafe, black trim and lid, black handle, switch, water gauge, camera angle, crop, proportions, lighting, reflections, and plain white studio background and soft contact shadow. Keep the same material finish and realistic shading. Do not add espresso parts, words, logos, badges, graphics, or accessories. This is the same coffee maker in a red colorway."
+    },
+    {
+      "file": "coffee-lifestyle-red.png",
+      "operation": "edit",
+      "reference": "coffee-lifestyle.png",
+      "tool": "Built-in imagegen tool",
+      "model": null,
+      "size": "1254x1254",
+      "prompt": "Use case: precise-object-edit. Edit the attached fictional drip coffee maker product photograph. Change ONLY the sage green plastic body panels to a bold, rich cherry red. All green panels including the water reservoir side column, upper brew basket housing, and base must be red. Preserve EXACT product geometry, glass carafe, black trim and lid, black handle, switch, water gauge, camera angle, crop, proportions, lighting, reflections, and warm kitchen background, countertop, tile, plant, and shadows. Keep the same material finish and realistic shading. Do not add espresso parts, words, logos, badges, graphics, or accessories. This is the same coffee maker in a red colorway."
     }
   ]
 }
