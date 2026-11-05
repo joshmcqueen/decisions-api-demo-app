@@ -32,6 +32,7 @@ The Vite dev proxy expects the API on port 3001. If changing `PORT`, update `vit
 4. In **Settings**, choose Luna with no reasoning for the closest same-model baseline, or Sol with reasoning to explore a larger-model baseline.
 5. Explore the drip-coffee/espresso bullet contradiction and the plush's promotional overlay. Each product also has a consistent preset.
 6. Use **Repeat runs** for alternating sequential comparisons. Export JSON for the full evidence or CSV for analysis. Run history lives only in the browser tab and is lost on refresh.
+7. Under the comparison and repeat-run results, explore **The business case**. Choose a fictional volume scenario or enter annual new listings and checks per listing. The panel uses mean measured inference cost per approach to show annual spending and monthly, quarterly, and annual savings (or additional cost).
 
 The lifestyle coffee photo is an additional exploration option: it intentionally fails the white-background criterion. Corrections are manual, not AI-generated rewrites.
 
@@ -65,7 +66,9 @@ npm run evaluate
 
 This makes **12 billable API calls** and replaces the local initial-results report. It preserves errors and disagreements. The evaluation uses Luna/no reasoning for Responses.
 
-The later business case should use **annual checks × measured cost per check**, with checks including listing attempts, edits, and reruns. Annual new listings, delayed listings, genuinely incremental sales, support cost, and error rates need separate evidence. Items sold is not listing volume. Latency savings alone are not labor savings or incremental revenue.
+The business-case panel uses **annual new listings × checks per listing × mean measured cost per check**. Its default is a **fictional** 100 million new listings/year and three checks/listing (300 million annual checks); presets range from one million to one billion listings. These are illustrative scenarios, not estimates of Amazon's actual listing volume. A check includes all five criteria; checks per listing represent submission, edits, and reruns. Monthly savings are annual savings divided by 12; quarterly savings are annual savings divided by four. The bar chart compares annual inference spending at the same volume. The panel appears beneath live comparisons and repeat-run summaries, uses the entire current batch for repeats, retains the measured model label, and withholds projections for pending, incomplete, failed, unknown-cost, or inconsistent comparisons. Negative savings are labeled additional cost. Assumptions can be edited without API calls and are shared across the two views.
+
+These directional projections hold measured per-check costs constant across a year and are not production forecasts. Actual new listings, delayed listings, genuinely incremental sales, support cost, and error rates need separate evidence. Items sold is not listing volume. Latency savings alone are not labor savings or incremental revenue.
 
 ## Product images
 

@@ -18,6 +18,8 @@ Run **Check listing**, point to the photo consistency finding, select the black 
 
 Use **Compare approaches** with Luna/no reasoning first. Same product evidence and same five check definitions; different endpoint and output mechanism. Show completion times, estimated cost, and agreement/disagreement. Let real results determine the claim. Sol/reasoning is an optional exploration, not the basis for a claim about endpoint speed alone.
 
+Then show **The business case** beneath the comparison or repeat-run summaries: “A fraction of a cent is easy to ignore. What happens when we run this across a marketplace?” The default fictional scenario is 100 million new listings a year, with an initial check and two checks for edits/reruns: 300 million checks. Point to the annual savings headline, monthly/quarterly breakdown, and annual spending bars. Change the scale live. The volume is a made-up presentation assumption, not Amazon data; costs come from the measured comparison. With repeat runs, the projection uses mean cost across the current batch, not just the final run. If Decisions is more expensive, the panel shows additional cost.
+
 ## Other examples (optional)
 
 - Coffee maker: the product specifications explicitly say drip-only; a bullet incorrectly claims espresso. The photo alone does not prove brewing capabilities.
