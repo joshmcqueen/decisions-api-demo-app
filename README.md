@@ -8,7 +8,8 @@ Requires Node **22.12+** (validated here with Node 26) and npm.
 
 ```sh
 npm install
-# .env has already been created; set OPENAI_API_KEY there.
+cp .env.example .env
+# Set OPENAI_API_KEY in .env.
 npm run dev
 ```
 
@@ -60,7 +61,7 @@ Live comparisons run concurrently for visible feedback. Repeat runs execute one 
 
 Costs are USD **estimates** using reported input, cached input, cache-write, and output usage with a versioned standard short-context rate card. Reasoning output is already part of output-token totals and is not charged twice. Decisions output has no token charge. Missing or inconsistent usage yields an unavailable estimate. Costs exclude regional premiums, tax, hosting, and asset preparation. Image generation is a separate, one-time preparation expense; the bundled CLI did not retain billable usage here, so its actual cost is not claimed.
 
-The initial real twelve-request evaluation is saved in [output/evaluation/initial-results.json](output/evaluation/initial-results.json) and CSV. All five checks matched the expected labels on all six prepared fixtures through both endpoints in that run. These tiny synthetic examples were also used during prompt development, so this is rehearsal coverage, not a held-out accuracy evaluation or production forecast. An initial v1 probe incorrectly treated a wrong image as a bullet inconsistency; v2 scopes text checks explicitly. No real or mock result is preloaded into the runtime UI.
+The initial real twelve-request evaluation is saved in [output/evaluation/initial-results.json](output/evaluation/initial-results.json) and CSV. All five checks matched the expected labels on all six prepared fixtures through both endpoints in that run. That report predates the prompt-file extraction and red coffee images; it does not validate those later changes. These tiny synthetic examples were also used during prompt development, so this is rehearsal coverage, not a held-out accuracy evaluation or production forecast. An initial v1 probe incorrectly treated a wrong image as a bullet inconsistency; v2 scopes text checks explicitly. No real or mock result is preloaded into the runtime UI.
 
 To run the live fixture evaluation again with the local servers running:
 
