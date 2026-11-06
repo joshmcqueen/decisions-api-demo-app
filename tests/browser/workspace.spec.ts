@@ -81,15 +81,22 @@ test('business case scales measured costs and retains the measured model when se
   await page.getByLabel('Comparison model').selectOption('gpt-6.1-sol');await page.getByRole('button',{name:'Done',exact:true}).click();
   await page.getByRole('button',{name:'Compare approaches',exact:true}).click();
   const impact=page.getByRole('region',{name:'Small difference. Marketplace-scale impact.'});
+  await expect(page.getByRole('button',{name:'Check listing',exact:true})).toBeEnabled();
+  await expect(impact).toHaveCount(0);
+  await page.getByRole('button',{name:'Repeat runs',exact:true}).click();await page.getByLabel('Paired repetitions').fill('2');await page.getByRole('button',{name:'Start repeat runs'}).click();
+  await expect(page.getByText('4 / 4 requests completed')).toBeVisible();
   await expect(impact.getByTestId('annual-impact')).toHaveText('$540,000');
   await expect(impact).toContainText('$45,000');await expect(impact).toContainText('$135,000');
   await impact.getByRole('button',{name:/Seller portfolio/}).click();await expect(impact.getByTestId('annual-impact')).toHaveText('$5,400');
   await impact.getByLabel('Checks / listing',{exact:true}).fill('1');await expect(impact.getByTestId('annual-impact')).toHaveText('$1,800');
+  await page.getByRole('button',{name:'Close dialog'}).click();
   await page.getByRole('button',{name:'Settings',exact:true}).click();await page.getByLabel('Comparison model').selectOption('gpt-6-luna');await page.getByRole('button',{name:'Done',exact:true}).click();
-  await expect(impact).toContainText('GPT-6.1 Sol');await expect(impact).toContainText('Saved comparison');
+  await expect(impact).toHaveCount(0);
+  await page.getByRole('button',{name:'Repeat runs',exact:true}).click();
+  await expect(impact).toContainText('GPT-6.1 Sol');
   await impact.getByLabel('Checks / listing',{exact:true}).fill('');await expect(impact.getByTestId('annual-impact')).toHaveCount(0);
 });
-test('repeat business case uses the batch mean and shares assumptions with the main view',async({page})=>{
+test('repeat business case uses the batch mean and stays confined to repeat runs',async({page})=>{
   let call=0;await page.route('**/api/preflight',async route=>{
     const run=simulatedRun(route.request().postDataJSON());run.cost!.usd=run.engine==='decisions'?.0002:++call===1?.001:.003;
     await route.fulfill({json:run});
@@ -98,7 +105,10 @@ test('repeat business case uses the batch mean and shares assumptions with the m
   const dialog=page.getByRole('dialog');await expect(page.getByText('4 / 4 requests completed')).toBeVisible();
   await expect(dialog.getByTestId('annual-impact')).toHaveText('$540,000');
   await dialog.getByRole('button',{name:/Global scale/}).click();await expect(dialog.getByTestId('annual-impact')).toHaveText('$5,400,000');
-  await page.getByRole('button',{name:'Close dialog'}).click();await expect(page.getByTestId('annual-impact')).toHaveText('$5,400,000');
+  await page.getByRole('button',{name:'Close dialog'}).click();
+  await expect(page.getByRole('region',{name:'Small difference. Marketplace-scale impact.'})).toHaveCount(0);
+  await page.getByRole('button',{name:'Repeat runs',exact:true}).click();await expect(dialog.getByTestId('annual-impact')).toHaveText('$5,400,000');
+  await page.getByRole('button',{name:'Close dialog'}).click();
   await page.setViewportSize({width:390,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
 });
@@ -107,9 +117,11 @@ test('business case labels extra costs and withholds unknown costs',async({page}
     const run=simulatedRun(route.request().postDataJSON());run.cost!.usd=missing?null:run.engine==='decisions'?.002:.0002;
     await route.fulfill({json:run});
   });
-  await page.goto('/');await page.getByRole('button',{name:'Compare approaches',exact:true}).click();
+  await page.goto('/');await page.getByRole('button',{name:'Repeat runs',exact:true}).click();await page.getByLabel('Paired repetitions').fill('2');await page.getByRole('button',{name:'Start repeat runs'}).click();
+  await expect(page.getByText('4 / 4 requests completed')).toBeVisible();
   const impact=page.getByRole('region',{name:'Small difference. Marketplace-scale impact.'});
   await expect(impact).toContainText('PROJECTED ADDITIONAL ANNUAL COST');await expect(impact.getByTestId('annual-impact')).toHaveText('$540,000');
-  missing=true;await page.getByRole('button',{name:'Compare approaches',exact:true}).click();
+  missing=true;await page.getByRole('button',{name:'Start repeat runs'}).click();
+  await expect(page.getByText('4 / 4 requests completed')).toBeVisible();
   await expect(impact).toContainText('A complete, costed comparison is needed.');await expect(impact.getByTestId('annual-impact')).toHaveCount(0);
 });
