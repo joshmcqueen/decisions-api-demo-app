@@ -1,0 +1,59 @@
+[
+  {
+    "mode": "flawed",
+    "scenario": "silent",
+    "result": false,
+    "evalId": "eval-XOm-2026-11-19T06:52:46",
+    "reason": "silent expected request_evidence, observed send_correction; evidence and state failed",
+    "citations": [],
+    "permitted": [],
+    "policy": "US-demo-2026-11-18.1-426e3aa0",
+    "traceUrl": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/29161862-acbf-479e-bbf6-c016d21f4dd4?trace_id=29161862-acbf-479e-bbf6-c016d21f4dd4&start_time=2026-11-19T06:52:46.946000",
+    "timestamp": "2026-11-19T06:52:46.933Z",
+    "passed": 0,
+    "failed": 1,
+    "experimentUrl": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/52932d44-28ab-4481-9067-d7101c777a99",
+    "experimentScore": 0
+  },
+  {
+    "mode": "live",
+    "scenario": "silent",
+    "result": true,
+    "evalId": "eval-dpe-2026-11-19T07:38:59",
+    "reason": "All assertions passed",
+    "citations": [
+      "listing/silent@1",
+      "pim/COM-D08-RED@b6169b80"
+    ],
+    "permitted": [
+      "request_evidence",
+      "dismiss"
+    ],
+    "policy": "US-demo-2026-11-18.1-426e3aa0",
+    "traceUrl": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/f0a08b1d-f90b-4ff8-80fe-ba776b8bf716?poll=true",
+    "timestamp": "2026-11-19T07:38:59.492Z",
+    "passed": 13,
+    "failed": 0,
+    "experimentUrl": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/7007aa4d-1750-40d1-9423-d686cc112306",
+    "experimentScore": 1
+  },
+  {
+    "mode": "controlled",
+    "scenario": "silent",
+    "result": true,
+    "evalId": "eval-5rc-2026-11-19T07:43:12",
+    "reason": "All assertions passed",
+    "citations": [
+      "listing/silent@1",
+      "pim/COM-D08-RED@b6169b80"
+    ],
+    "permitted": [
+      "request_evidence",
+      "dismiss"
+    ],
+    "policy": "US-demo-2026-11-18.1-426e3aa0",
+    "timestamp": "2026-11-19T07:43:12.649Z",
+    "passed": 17,
+    "failed": 0
+  }
+]

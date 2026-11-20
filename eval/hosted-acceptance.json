@@ -1,0 +1,101 @@
+{
+  "account": "ChatGPT Plus",
+  "handoff": "OAuth 2.1 + PKCE through temporary HTTPS reviewer MCP",
+  "at": "2026-11-19T07:35:57.518Z",
+  "policy": "US-demo-2026-11-18.1-426e3aa0",
+  "caseId": "c183f72a-b5a5-462a-8753-b0a5cd2eaef5",
+  "status": "Revalidated",
+  "receiptCount": 1,
+  "sellerTimeline": [
+    {
+      "actor": "Shopper report",
+      "revision": 1,
+      "label": "Case opened"
+    },
+    {
+      "actor": "Maya",
+      "revision": 1,
+      "label": "Correction requested"
+    },
+    {
+      "actor": "Seller",
+      "revision": 2,
+      "label": "Draft updated"
+    },
+    {
+      "actor": "Validator",
+      "revision": 2,
+      "label": "Revalidated"
+    }
+  ],
+  "spans": [
+    {
+      "operation": "mcp.get_case",
+      "caseId": "c183f72a-b5a5-462a-8753-b0a5cd2eaef5",
+      "revision": 1,
+      "outcome": "In review",
+      "link": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/432f2477-5ef9-4a47-a9d3-9a5bfd1c73a2?poll=true"
+    },
+    {
+      "operation": "mcp.get_evidence",
+      "caseId": "c183f72a-b5a5-462a-8753-b0a5cd2eaef5",
+      "revision": 1,
+      "outcome": "In review",
+      "link": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/aaf6fa76-c1f1-4af5-9baf-4d0a8262ca78?poll=true"
+    },
+    {
+      "operation": "mcp.get_evidence",
+      "caseId": "c183f72a-b5a5-462a-8753-b0a5cd2eaef5",
+      "revision": 1,
+      "outcome": "In review",
+      "link": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/6b644095-ea59-416e-9076-53208903f9b4?poll=true"
+    },
+    {
+      "operation": "case.disposition",
+      "caseId": "c183f72a-b5a5-462a-8753-b0a5cd2eaef5",
+      "revision": 1,
+      "outcome": "Correction requested",
+      "link": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/46cf0fca-244d-4214-afb7-d266de12e2a8?poll=true"
+    },
+    {
+      "operation": "mcp.submit_case_action",
+      "caseId": "c183f72a-b5a5-462a-8753-b0a5cd2eaef5",
+      "revision": 1,
+      "outcome": "Correction requested",
+      "link": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/a809e086-9661-4b4a-8d15-2f9cc1f4b0ad?poll=true"
+    },
+    {
+      "operation": "case.revalidation",
+      "caseId": "c183f72a-b5a5-462a-8753-b0a5cd2eaef5",
+      "revision": 2,
+      "outcome": "green",
+      "link": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/8c596d94-8320-4525-9dd4-7f9fee182ace?poll=true"
+    },
+    {
+      "operation": "mcp.get_case",
+      "caseId": "da426b98-b821-41d4-8b64-bfc24d8b8880",
+      "revision": 1,
+      "outcome": "In review",
+      "link": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/22b66955-996b-4f48-ae0d-96ac95f982f3?poll=true"
+    },
+    {
+      "operation": "mcp.get_evidence",
+      "caseId": "da426b98-b821-41d4-8b64-bfc24d8b8880",
+      "revision": 1,
+      "outcome": "In review",
+      "link": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/4568f67a-4135-4b46-9093-1610d48269bb?poll=true"
+    },
+    {
+      "operation": "mcp.get_evidence",
+      "caseId": "da426b98-b821-41d4-8b64-bfc24d8b8880",
+      "revision": 1,
+      "outcome": "In review",
+      "link": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/c3d72da6-661a-4f03-8189-1ea603fc66ca?poll=true"
+    },
+    {
+      "operation": "mcp.submit_case_action",
+      "outcome": "denied_or_stale",
+      "link": "https://smith.langchain.com/o/178d6e5d-8bfe-5b9a-ab41-8477d37921ab/projects/p/2b581ab5-015a-4ac6-aaaa-bd7bbc4e6829/r/13236cc7-342a-4852-a96e-224759f115d8?poll=true"
+    }
+  ]
+}

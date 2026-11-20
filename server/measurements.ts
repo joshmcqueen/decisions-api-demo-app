@@ -6,13 +6,14 @@ export const PRICING_VERSION = '2026-11-05-standard-short-context';
 const source = 'https://developers.openai.com/api/docs/pricing';
 const standard = {
   'gpt-6-luna': { input: 0.10, cached: 0.01, cacheWrite: 0.125, output: 0.50 },
+  'gpt-6.2-sol': { input: 2.00, cached: 0.10, cacheWrite: 2.50, output: 10.00 },
   'gpt-6.1-sol': { input: 2.00, cached: 0.10, cacheWrite: 2.50, output: 10.00 },
 };
-export function estimateCost(engine: Engine, model: Model, usage: Usage | null): Cost {
+export function estimateCost(engine: Engine, model: Model | 'gpt-6.2-sol', usage: Usage | null): Cost {
   const rates = { ...standard[model], output: engine === 'decisions' ? 0 : standard[model].output };
   const valid = usage && Object.values(usage).every(v => Number.isFinite(v) && v >= 0) && usage.cached + usage.cacheWrite <= usage.input;
   const usd = valid ? ((usage.input - usage.cached - usage.cacheWrite) * rates.input + usage.cached * rates.cached + usage.cacheWrite * rates.cacheWrite + usage.output * rates.output) / 1e6 : null;
-  return { usd, rates, version: PRICING_VERSION, source: engine === 'decisions' ? 'https://developers.openai.com/api/docs/guides/decisions' : source, note: 'Estimate in USD from reported usage. Standard processing, short context, default cache duration; excludes regional premiums, tax, hosting, and image preparation.' };
+  return { usd, rates, version: model === 'gpt-6.2-sol' ? '2026-11-18-standard-short-context' : PRICING_VERSION, source: engine === 'decisions' ? 'https://developers.openai.com/api/docs/guides/decisions' : source, note: 'Estimate in USD from reported usage. Standard processing, short context, default cache duration; excludes regional premiums, tax, hosting, and image preparation.' };
 }
 export function normalizeUsage(raw: unknown): Usage | null {
   if (!raw || typeof raw !== 'object') return null;

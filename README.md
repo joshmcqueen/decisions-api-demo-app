@@ -1,6 +1,56 @@
-# Listing Checker - Decisions API Demo
+# Seller Listing Validator for the Amazon onsite
 
-**Helping sellers get listings right.** A local Decisions API interview demo using fictional product data and generated photos. Nothing is sent to Amazon or published.
+The seller resolves a clear photo mismatch during submission. Maya receives the disputed coffee claim, its exact-SKU manufacturer record and a prepared recommendation. She can request a correction, and the seller sees the receipt and revalidates the draft. The pilot scorecard separates cases per 1,000 from active minutes per case.
+
+[Onsite presentation](docs/onsite/amazon-onsite.html) · [18-minute click script and rehearsal notes](docs/onsite/rehearsal.md) · [Saved release results](eval/rehearsal-results.json)
+
+## Onsite workspace
+
+Start the app using the commands below. The root opens **Seller studio**. **Reviewer queue** contains the shopper and merchant intakes. Request help on the graphite headphones to add the third entry. **Pilot impact** contains editable scenario assumptions. **Technical workspaces** provides policy shadow tests, steward source changes, engineering release evidence and read-only audit. **Comparison lab** opens the original manual checker, latency benchmark and inference calculator.
+
+Use Node 26 on the onsite Mac. SQLite stores immutable draft revisions, evidence, policy snapshots, case receipts, worker state and review activity in `tmp/onsite/rehearsal.sqlite`. The two coffee fixtures share all product facts except the espresso capability. The local role selector creates dedicated synthetic presenter sessions on loopback. Remote access goes through the isolated reviewer MCP service.
+
+| Task | Command |
+|---|---|
+| Seed intake and finish preparation | `npm run onsite:prepare` |
+| Save / restore the ready cases and bound chats | `npm run onsite:checkpoint` then, with both listeners stopped, `npm run onsite:restore` |
+| Archive and reseed the dedicated demo database | Stop all onsite processes, then `npm run onsite:reset` |
+| Rebind a new prepared private conversation | `npm run onsite:bind -- CASE_ID https://chatgpt.com/c/CONVERSATION_ID` |
+| Controlled Promptfoo release | `npm run onsite:eval` |
+| Live-model Promptfoo release, billable | `ONSITE_EVAL_MODE=live npm run onsite:eval` |
+| Reproduce the private labeled LangSmith experiment pair | `npm run onsite:experiment` |
+| Reproduce the intentionally failing candidate | `ONSITE_EVAL_MODE=flawed npm run onsite:eval` |
+| Contracts and browser checks | `npm test` and `npm run test:browser` |
+| Disposable browser acceptance with live models | `REHEARSAL_LIVE=1 npm run test:browser -- tests/browser/onsite.spec.ts` |
+
+### ChatGPT and tracing
+
+[Hosted ChatGPT acceptance](eval/hosted-acceptance.json) records the successful Plus-account OAuth read, card, evidence lookup, write, seller revalidation and stale rejection over temporary HTTPS. The temporary tunnel is closed. The default handoff opens a revision-bound private conversation or copies the current synthetic brief for ChatGPT. The local case screen records approval. The LangSmith API key enables redacted trace export to the explicitly named `seller-validator-onsite` project. No agent ID is required. The API project funds Decisions and Responses independently of the ChatGPT subscription. Diagnostic costs are estimates from versioned rates and reported usage.
+
+For a connected host, set **MCP_ISSUER** to the exact OAuth issuer, **MCP_JWKS_URI** to its HTTPS signing-key URL, **MCP_MAYA_SUBJECT** to the authorized reviewer's subject and **MCP_RESOURCE** to the public HTTPS endpoint ending in `/mcp`. The issuer must support the ChatGPT OAuth client, the resource audience, and the `case:read` and optional `case:write` scopes. Run `npm run onsite:mcp` and route only that listener (default 127.0.0.1:3002) through your deployment or tunnel. Register the dedicated URL in ChatGPT. Test an assigned case, open the interactive card, inspect a linked source, then confirm one action and verify its seller receipt. Set **ONSITE_HANDOFF** to the verified mode in .env and restart. Set **ONSITE_PLUGIN_URL** to the installed plugin’s ChatGPT detail page to open its **Try in chat** entry point directly. The onsite Mac can also act as a synthetic issuer for a short-lived rehearsal. Set `MCP_PRESENTER_OAUTH=1` with the public `MCP_RESOURCE` and run the same dedicated listener. In ChatGPT choose OAuth and Dynamic Client Registration. Open Maya’s queue first. The redirect asks for explicit local consent to read or confirm case actions. Tokens expire after one hour, and stopping the listener invalidates them. An enduring URL and external issuer are preferable for a repeatable connected presentation.
+
+The policy registry, retrieval worker and local tools share SQLite. The authenticated MCP subject maps to Maya. The same action service validates assignment, case and draft versions, brief, policy, action and idempotency key. Source edits create new snapshots and trigger checks. Actual public rule scope and category exceptions still require signed-in review before production enforcement.
+
+```mermaid
+flowchart LR
+    Seller[Seller editor] --> API[Local application API]
+    Feed[Scoped merchant grant] --> API
+    Shopper[Published listing report] --> API
+    API --> Checks[Luna Decisions and phrase checks]
+    Checks --> Sources[(SQLite revisions, policy, evidence and cases)]
+    API --> Sources
+    Sources --> Worker[Preparation worker]
+    Worker --> Sol[GPT-6.2 Sol Responses]
+    Sol --> Worker
+    Worker --> Sources
+    Sources --> Maya[Maya's queue]
+    Maya --> Chat[ChatGPT]
+    Chat --> MCP[Authenticated reviewer MCP]
+    MCP --> Action[Case action service]
+    Maya --> Action
+    Action --> Sources
+    Sources --> Inbox[Seller receipt]
+```
 
 ## Run
 
@@ -8,12 +58,12 @@ Requires Node **22.12+** (validated here with Node 26) and npm.
 
 ```sh
 npm install
-cp .env.example .env
+test -f .env || cp .env.example .env
 # Set OPENAI_API_KEY in .env.
 npm run dev
 ```
 
-Open **http://127.0.0.1:5173/**. The API listens only on 127.0.0.1:3001. The `.env` key is read server-side and can be updated without restarting the server. Do not prefix it with `VITE_`. API calls and image generation incur charges on your API project.
+Open **http://127.0.0.1:5173/**. The API listens only on 127.0.0.1:3001. The API key is read server-side. Restart the onsite processes after changing integration settings. Do not prefix it with `VITE_`. API calls and image generation incur charges on your API project.
 
 For a production-mode local preview:
 
@@ -25,9 +75,9 @@ npm start
 
 The Vite dev proxy expects the API on port 3001. If changing `PORT`, update `vite.config.ts` and the local-origin allowlist too.
 
-## Try the workflow
+## Comparison lab workflow
 
-1. Start on the headphone needs-attention example. The text says black; the photo is cream. Select **Check listing**.
+1. Open [/lab](http://127.0.0.1:5173/lab) and start on the headphone needs-attention example. The text says black; the photo is cream. Select **Check listing**.
 2. Choose the black photo and check again. Changing any input invalidates previous results and cancels pending requests.
 3. Select **Compare approaches** to send the same listing snapshot and exact image bytes to Decisions and Responses. Each result appears independently.
 4. In **Settings**, choose Luna with no reasoning for the closest same-model baseline, or Sol with reasoning to explore a larger-model baseline.
@@ -104,3 +154,5 @@ Browser tests cover correction/rerun, persisted settings, independent completion
 All three original Seller Central links, plus a bullet-point reference, are preserved in **Listing guidelines**. Those pages returned sign-in shells during research; their full policy text and category-specific numeric limits are not represented as verified. The white-background/overlay checks are focused demo criteria and cannot establish full Amazon compliance. Amazon already has listing validation and AI assistance; this demonstrates a potential complementary consistency layer.
 
 For production, next steps include a held-out, category-diverse labeled dataset; false-acceptance/false-rejection analysis; calibrated routing if probability thresholds are added; authenticated access; retention/audit policies; concurrency/rate-limit testing; pricing reconciliation; and integration with authoritative catalog systems. This local demo has none of those production guarantees.
+
+For pilot calibration, split labeled data by product family, tune routing thresholds per criterion, and evaluate once on a separate held-out set. The release suite measures these specific synthetic examples.

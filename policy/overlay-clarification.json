@@ -1,0 +1,7 @@
+{
+  "version": "US-main-overlay-2026-11-18.3",
+  "id": "no_overlay",
+  "owner": "Catalog image policy owner",
+  "rule": "US main images exclude added artwork. Visible thread following the surface of a toy supports an integral embroidered mark. An unclear mark needs a closer source photo.",
+  "question": "Is the US main image free from added marketing graphics? A badge in white space, superimposed lettering or watermark is a mismatch. A clearly embroidered brand monogram sewn onto the product with visibly raised thread ridges is a match. Printed branding that visibly follows the material also matches. A visible logo alone does not constitute an overlay. If a visible mark could be either printed or added and the photograph cannot establish which, choose insufficient_evidence. Apply this criterion to the main placement."
+}

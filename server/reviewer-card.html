@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width" />
+  <style>
+    body {
+      font: 15px system-ui;
+      color: #253943;
+      margin: 0;
+      padding: 16px;
+      background: #faf9f5;
+    }
+    h2 {
+      font-size: 22px;
+    }
+    p {
+      line-height: 1.5;
+    }
+    button,
+    summary {
+      cursor: pointer;
+    }
+    button {
+      border: 1px solid #b0b9b8;
+      border-radius: 6px;
+      background: white;
+      color: #273a41;
+      padding: 8px;
+      margin: 4px;
+    }
+    small {
+      display: block;
+    }
+    article {
+      border-top: 2px solid #e6a441;
+      padding-top: 8px;
+    }
+    pre {
+      white-space: pre-wrap;
+    }
+  </style>
+  <article>
+    <small id="sku"></small>
+    <h2>Catalog review</h2>
+    <blockquote id="claim"></blockquote>
+    <p id="report">Loading assigned case…</p>
+    <h3>Prepared recommendation</h3>
+    <p id="brief"></p>
+    <div id="sources"></div>
+    <div id="actions"></div>
+    <p id="status" role="status"></p>
+  </article>
+  <script>
+    const el = (id) => document.getElementById(id),
+      requests = new Map();
+    let next = 0;
+    const send = (method, params) =>
+      new Promise((resolve, reject) => {
+        const id = ++next;
+        requests.set(id, { resolve, reject });
+        parent.postMessage({ jsonrpc: '2.0', id, method, params }, '*');
+      });
+    const labels = {
+      send_correction: 'Send correction request',
+      request_evidence: 'Request more evidence',
+      dismiss: 'Dismiss report',
+    };
+    function render(c) {
+      el('sku').textContent = c.sku + ' · revision ' + c.revision;
+      el('report').textContent = c.report;
+      el('claim').textContent =
+        c.evidence
+          .find((e) => e.ref.startsWith('listing/'))
+          ?.text.split('\n')
+          .slice(1)
+          .find((t) => /espresso/i.test(t)) || '';
+      el('brief').textContent = c.brief
+        ? labels[c.brief.recommendation] +
+          '. ' +
+          c.brief.rationale +
+          ' ' +
+          c.brief.uncertainties.join(' ')
+        : c.prep;
+      el('sources').replaceChildren();
+      el('actions').replaceChildren();
+      for (const e of c.evidence) {
+        const d = document.createElement('details'),
+          s = document.createElement('summary'),
+          p = document.createElement('pre');
+        s.textContent = e.label;
+        p.textContent = e.ref + '\n' + e.text;
+        d.append(s, p);
+        el('sources').append(d);
+      }
+      for (const action of c.actions) {
+        const b = document.createElement('button'),
+          key = crypto.randomUUID();
+        b.textContent = labels[action];
+        let confirmed = false;
+        let reason;
+        if (action !== c.brief.recommendation) {
+          reason = document.createElement('input');
+          reason.placeholder = 'Reason for this disposition';
+          reason.setAttribute('aria-label', reason.placeholder);
+          reason.maxLength = 1000;
+          reason.hidden = true;
+          el('actions').append(reason);
+        }
+        b.onclick = async () => {
+          if (!confirmed) {
+            confirmed = true;
+            if (reason) {
+              reason.hidden = false;
+              reason.focus();
+            }
+            b.textContent = 'Confirm ' + labels[action];
+            return;
+          }
+          if (reason && !reason.value.trim()) {
+            reason.focus();
+            el('status').textContent = 'Enter a reason for choosing another disposition.';
+            return;
+          }
+          b.disabled = true;
+          try {
+            const r = await send('tools/call', {
+              name: 'submit_case_action',
+              arguments: {
+                case_id: c.id,
+                action,
+                expected_case_version: c.version,
+                expected_listing_revision: c.revision,
+                brief_id: c.brief.id,
+                idempotency_key: key,
+                rationale: reason?.value.trim() || undefined,
+              },
+            });
+            if (r.isError) throw Error(r.content[0].text);
+            el('status').textContent = 'Decision recorded · ' + r.structuredContent.status;
+            el('actions').replaceChildren();
+          } catch (e) {
+            el('status').textContent = e.message;
+            b.disabled = false;
+          }
+        };
+        el('actions').append(b);
+      }
+    }
+    addEventListener('message', (e) => {
+      if (e.source !== parent || e.data?.jsonrpc !== '2.0') return;
+      const m = e.data;
+      if (m.method === 'ui/notifications/tool-result' && m.params?.structuredContent?.evidence)
+        render(m.params.structuredContent);
+      if (requests.has(m.id)) {
+        const p = requests.get(m.id);
+        requests.delete(m.id);
+        m.error ? p.reject(Error(m.error.message)) : p.resolve(m.result);
+      }
+    });
+    send('ui/initialize', {
+      appInfo: { name: 'Listing review', version: '1.0.0' },
+      appCapabilities: {},
+      protocolVersion: '2026-01-26',
+    })
+      .then(() =>
+        parent.postMessage(
+          { jsonrpc: '2.0', method: 'ui/notifications/initialized', params: {} },
+          '*',
+        ),
+      )
+      .catch(() => {
+        el('status').textContent = 'Open the structured case result in chat.';
+      });
+  </script>
+</html>

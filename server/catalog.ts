@@ -5,6 +5,8 @@ export const assets: Asset[] = [
   { id: 'headphones-cream', productId: 'headphones', label: 'Warm cream', file: 'headphones-cream.png' },
   { id: 'coffee-clean', productId: 'coffee', label: 'Studio photo', file: 'coffee-clean-red.png' },
   { id: 'coffee-lifestyle', productId: 'coffee', label: 'Kitchen setting', file: 'coffee-lifestyle-red.png' },
+  { id: 'plush-embroidered', productId:'plush', label:'Embroidered monogram', file:'plush-embroidered.png' },
+  { id: 'plush-unclear', productId:'plush', label:'Unclear monogram', file:'plush-unclear.png' },
   { id: 'plush-clean', productId: 'plush', label: 'Clean product photo', file: 'plush-clean.png' },
   { id: 'plush-promo', productId: 'plush', label: 'Promotional overlay', file: 'plush-promo.png' },
 ];

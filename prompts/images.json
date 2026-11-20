@@ -57,6 +57,20 @@
       "model": null,
       "size": "1254x1254",
       "prompt": "Use case: precise-object-edit. Edit the attached fictional drip coffee maker product photograph. Change ONLY the sage green plastic body panels to a bold, rich cherry red. All green panels including the water reservoir side column, upper brew basket housing, and base must be red. Preserve EXACT product geometry, glass carafe, black trim and lid, black handle, switch, water gauge, camera angle, crop, proportions, lighting, reflections, and warm kitchen background, countertop, tile, plant, and shadows. Keep the same material finish and realistic shading. Do not add espresso parts, words, logos, badges, graphics, or accessories. This is the same coffee maker in a red colorway."
+    },
+    {
+      "file": "plush-embroidered.png",
+      "operation": "edit",
+      "reference": "plush-clean.png",
+      "tool": "Built-in imagegen",
+      "prompt": "Precise product photograph edit. Use the supplied clean lavender axolotl plush photograph as the edit target. Add one small brand monogram ODD embroidered directly onto the visible side of the toy. Use thick visible thread ridges, curving along its body, with minor indentations under the stitches. Keep the rest of the photograph identical. Preserve background, camera angle, and lighting. No badges or text in the background."
+    },
+    {
+      "file": "plush-unclear.png",
+      "operation": "edit",
+      "reference": "plush-clean.png",
+      "tool": "Built-in imagegen",
+      "prompt": "Precise product photograph edit. Use the supplied clean lavender axolotl plush photograph as the edit target. Add one very small low-contrast grayish three-letter monogram on the plush torso. At this photo resolution the mark must be legible as a mark yet have no discernible thread, physical surface texture or clear raised edges to establish whether it is printed on the toy or superimposed digitally. Keep the rest of the photograph identical. Preserve background, camera angle, and lighting. No badges or text in the background."
     }
   ]
 }

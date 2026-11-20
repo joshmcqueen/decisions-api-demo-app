@@ -1,4 +1,6 @@
 import express from 'express';
+import {router as workflowRouter} from './workflow-http.ts';
+import type {Workflow} from './workflow.ts';
 import OpenAI from 'openai';
 import type { DecisionCreateParams } from 'openai/resources/decisions';
 import type { ResponseCreateParamsNonStreaming } from 'openai/resources/responses/responses';
@@ -23,7 +25,7 @@ const schema = z.object({
   settings: z.object({ model: z.enum(['gpt-6-luna','gpt-6.1-sol']), effort: z.enum(['none','low','medium','high']) }).optional(),
 }).strict();
 export interface Provider { decisions: { create: (...args: any[]) => Promise<any> }; responses: { create: (...args: any[]) => Promise<any> } }
-export function createApp(options: { clientFactory?: (key: string) => Provider; key?: string; imageLoader?: (file: string) => Buffer; promptsDirectory?: string } = {}) {
+export function createApp(options: { workflow?: Workflow; clientFactory?: (key: string) => Provider; key?: string; imageLoader?: (file: string) => Buffer; promptsDirectory?: string } = {}) {
   const app = express();
   app.disable('x-powered-by');
   app.use((req,res,next) => {
@@ -34,6 +36,7 @@ export function createApp(options: { clientFactory?: (key: string) => Provider; 
     next();
   });
   app.use(express.json({ limit: '32kb' }));
+  if(options.workflow) app.use('/api',workflowRouter(options.workflow));
   app.get('/api/config', (_req,res) => {
     try {
       const prompts = loadPrompts(options.promptsDirectory);
@@ -118,6 +121,7 @@ export function createApp(options: { clientFactory?: (key: string) => Provider; 
     if (!controller.signal.aborted) res.json(run);
   });
   if (process.env.NODE_ENV === 'production') {
+    app.get('/docs/onsite/amazon-onsite.html', (_req,res) => res.sendFile(path.join(root,'docs/onsite/amazon-onsite.html')));
     app.use(express.static(path.join(root,'dist')));
     app.get('/{*path}', (_req,res) => res.sendFile(path.join(root,'dist/index.html')));
   }

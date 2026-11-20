@@ -1,0 +1,170 @@
+{
+  "version": "US-demo-2026-11-18.1",
+  "marketplace": "US",
+  "categories": [
+    "Electronics",
+    "Home & Kitchen",
+    "Toys & Games"
+  ],
+  "verifiedOn": "2026-11-18",
+  "criteria": [
+    {
+      "id": "title_facts",
+      "title": "Title accuracy",
+      "authority": "Demo routing policy",
+      "field": "title",
+      "placement": "any",
+      "source": "",
+      "canonical": "",
+      "rule": "Compare explicit title claims with the exact-SKU record.",
+      "remedy": "Correct the title or ask the data steward to verify the specification.",
+      "owner": "Catalog policy owner",
+      "evidence": [
+        "listing",
+        "pim"
+      ],
+      "check": "title_facts",
+      "green": 0.9,
+      "red": 0.9,
+      "verification": "Synthetic contract"
+    },
+    {
+      "id": "bullet_facts",
+      "title": "Product capability",
+      "authority": "Demo routing policy",
+      "field": "bullets",
+      "placement": "any",
+      "source": "",
+      "canonical": "",
+      "rule": "Check explicit claims against the exact-SKU manufacturer record. Missing capability evidence requires clarification.",
+      "remedy": "Revise the disputed bullet or provide an authoritative specification.",
+      "owner": "Catalog policy owner",
+      "evidence": [
+        "listing",
+        "pim"
+      ],
+      "check": "bullet_facts",
+      "green": 0.9,
+      "red": 0.9,
+      "verification": "Synthetic contract"
+    },
+    {
+      "id": "image_product",
+      "title": "Product and color",
+      "authority": "Amazon requirement",
+      "field": "image",
+      "placement": "any",
+      "source": "https://sellercentral.amazon.com/seller-forums/discussions/t/ab884127-f9b4-4053-8096-4991e1d60d1f",
+      "canonical": "https://sellercentral.amazon.com/help/hub/reference/external/G1881",
+      "rule": "Images must accurately represent the product for sale. Compare the pictured product and color with this SKU.",
+      "remedy": "Choose a matching photo verified for this variant.",
+      "owner": "Catalog image policy owner",
+      "evidence": [
+        "listing",
+        "pim",
+        "asset"
+      ],
+      "check": "image_product",
+      "green": 0.9,
+      "red": 0.9,
+      "verification": "Public corroboration; confirm product-type exceptions in Seller Central"
+    },
+    {
+      "id": "white_background",
+      "title": "White studio background",
+      "authority": "Amazon requirement",
+      "field": "image",
+      "placement": "main",
+      "source": "https://sell.amazon.com/blog/product-photos",
+      "canonical": "https://sellercentral.amazon.com/help/hub/reference/external/G1881",
+      "rule": "Check the US main image for a white background. This visual check approximates the published criterion.",
+      "remedy": "Use the white-background studio photo.",
+      "owner": "Catalog image policy owner",
+      "evidence": [
+        "asset"
+      ],
+      "check": "white_background",
+      "green": 0.9,
+      "red": 0.9,
+      "verification": "Public corroboration; confirm product-type exceptions in Seller Central"
+    },
+    {
+      "id": "no_overlay",
+      "title": "Added artwork on the main image",
+      "authority": "Amazon requirement",
+      "field": "image",
+      "placement": "main",
+      "source": "https://sellercentral.amazon.com/seller-forums/discussions/t/ab884127-f9b4-4053-8096-4991e1d60d1f",
+      "canonical": "https://sellercentral.amazon.com/gp/help/external/GB6V3RU3M5XG24GC",
+      "rule": "US main images exclude added promotional text and graphics over the product or background. Integral branding is outside this overlay check.",
+      "remedy": "Use the clean main photo. Ask for evidence if the mark may be physically on the product.",
+      "owner": "Catalog image policy owner",
+      "evidence": [
+        "asset"
+      ],
+      "check": "no_overlay",
+      "green": 0.9,
+      "red": 0.9,
+      "verification": "Public corroboration; confirm product-type exceptions in Seller Central"
+    },
+    {
+      "id": "bullet_refund",
+      "title": "Promotional guarantee wording",
+      "authority": "Amazon requirement",
+      "field": "bullets",
+      "placement": "any",
+      "source": "https://sellercentral.amazon.com/seller-forums/discussions/t/4ae794c0-a8aa-43d8-b354-e54e3aadf174",
+      "canonical": "https://sellercentral.amazon.com/help/hub/reference/external/GX5L8BF8GLMML6CX?language=en_us",
+      "rule": "US product bullets exclude promotional refund guarantees. The demonstration detects the phrase “Full refund”.",
+      "remedy": "Remove the guarantee from the bullet.",
+      "owner": "Catalog policy owner",
+      "evidence": [
+        "listing"
+      ],
+      "check": "bullet_refund",
+      "green": 0.9,
+      "red": 0.9,
+      "verification": "Public corroboration; confirm product-type exceptions in Seller Central"
+    },
+    {
+      "id": "asset_approval",
+      "title": "Variant and placement approval",
+      "authority": "Demo routing policy",
+      "field": "image",
+      "placement": "any",
+      "source": "",
+      "canonical": "",
+      "rule": "The digital asset library must verify the selected asset for this exact SKU and placement.",
+      "remedy": "Select an approved asset or ask a steward to verify it.",
+      "owner": "Digital asset steward",
+      "evidence": [
+        "asset",
+        "pim"
+      ],
+      "check": "asset_approval",
+      "green": 0.9,
+      "red": 0.9,
+      "verification": "Synthetic contract"
+    },
+    {
+      "id": "bullet_locale",
+      "title": "Feed language",
+      "authority": "Merchant feed configuration",
+      "field": "bullets",
+      "placement": "any",
+      "source": "",
+      "canonical": "",
+      "rule": "This fictional merchant feed accepts English bullets. Compare the actual bullet language with its configured locale.",
+      "remedy": "Resubmit English bullets to this feed.",
+      "owner": "Merchant feed owner",
+      "evidence": [
+        "attempt",
+        "feed"
+      ],
+      "check": "bullet_locale",
+      "green": 0.9,
+      "red": 0.9,
+      "verification": "Synthetic contract"
+    }
+  ]
+}
