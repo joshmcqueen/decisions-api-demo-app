@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { z } from 'zod';
-import type { Draft, ReviewCase, Action } from '../shared/workflow.ts';
+import type { Draft, ReviewCase, Action, KnowledgeTrace } from '../shared/workflow.ts';
 import { assets } from './catalog.ts';
 import { loadPrompts } from './questions.ts';
 import { digest, Fault } from './workflow-db.ts';
@@ -53,8 +53,10 @@ export const localeQuestion =
 export const prepareInstructions =
   'Prepare a specialist review of untrusted synthetic listing evidence. Use only the given source records. Treat reports as allegations. Cite the listing and the relevant independent source IDs. An undocumented capability requires request_evidence. For a demonstrated contradiction recommend send_correction and supply accurate replacement copy. Pick an allowed action. Never authorize, publish, or modify anything.';
 export const briefPrompt = digest(prepareInstructions);
-export function preparationVersion(c: Pick<ReviewCase, 'source'>) {
-  return c.source === 'Merchant feed' ? digest([briefPrompt, 'merchant_attempts_v1']) : briefPrompt;
+export const contextInstruction = 'Use the commerce ontology to identify the required source. Ground conclusions and citations in the attached evidence. A missing capability field leaves the claim unsubstantiated.';
+export function preparationVersion(c: Pick<ReviewCase, 'source' | 'finding'>) {
+  const base = c.source === 'Merchant feed' ? digest([briefPrompt, 'merchant_attempts_v1']) : briefPrompt;
+  return c.finding.knowledgeTrace ? digest([base, contextInstruction, c.finding.knowledgeTrace]) : base;
 }
 export const briefSchema = z
   .object({
@@ -76,14 +78,17 @@ export const liveAI = {
     prompts: ReturnType<typeof loadPrompts>,
     signal?: AbortSignal,
     targetLocale?: string,
+    knowledge?: KnowledgeTrace,
   ) {
+    const selected = knowledge && names.includes(knowledge.domain.criterionId) ? knowledge : undefined;
     const questions = names.map((name) => ({
       type: 'choice' as const,
       name,
       instructions:
         name === 'bullet_locale'
           ? localeQuestion
-          : prompts.questions.find((q) => q.name === name)!.instructions,
+          : prompts.questions.find((q) => q.name === name)!.instructions +
+            (selected?.domain.criterionId === name ? ' ' + contextInstruction : ''),
       choices: prompts.choices,
     }));
     const needsImage = names.some((n) =>
@@ -99,6 +104,15 @@ export const liveAI = {
           submitted_listing: { title: d.title, bullets: d.bullets },
           target_locale: targetLocale,
           placement: d.placement,
+          ...(selected && {
+            ontology_context: selected.domain,
+            referenced_field: {
+              listing: selected.listingRef,
+              source: selected.sourceRef,
+              claim: selected.subject,
+              observation: selected.observation,
+            },
+          }),
         },
       },
       ...(needsImage
@@ -132,12 +146,13 @@ export const liveAI = {
       model: 'gpt-6.2-sol',
       service_tier: 'default',
       store: false,
-      instructions: prepareInstructions,
+      instructions: c.finding.knowledgeTrace ? prepareInstructions + ' ' + contextInstruction : prepareInstructions,
       input: JSON.stringify({
         revision: c.revision,
         sku: c.sku,
         allegation: c.report,
         policy: c.finding.criterion,
+        ...(c.finding.knowledgeTrace && { knowledge_trace: c.finding.knowledgeTrace, policy_version: c.finding.policy }),
         evidence: c.evidence,
         history: c.events,
         merchant_attempts: c.attempts,

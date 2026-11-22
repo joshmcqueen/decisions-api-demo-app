@@ -22,9 +22,10 @@ import {
   overlayVersion,
 } from './workflow-db.ts';
 import { loadPrompts } from './questions.ts';
-import { liveAI, preparationVersion, localeQuestion, type WorkflowAI } from './workflow-ai.ts';
+import { liveAI, preparationVersion, localeQuestion, contextInstruction, type WorkflowAI } from './workflow-ai.ts';
 import { trace } from './onsite-tracing.ts';
 import { CHECK_IDS } from '../shared/domain.ts';
+import { espressoBullet, resolveKnowledgeTrace } from './commerce-ontology.ts';
 
 export type Actor =
   | 'seller'
@@ -38,6 +39,9 @@ export type Actor =
   | 'steward';
 const active = (c: ReviewCase) => !['Dismissed', 'Revalidated'].includes(c.status);
 const expertise = ['Electronics', 'Home & Kitchen'];
+export function assignedToMaya(c: ReviewCase): boolean {
+  return c.merchant === merchant && c.assigned === 'Maya' && expertise.includes(c.category);
+}
 export function allowed(c: ReviewCase): Action[] {
   if (!active(c) || c.status !== 'In review') return [];
   return c.finding.route === 'red'
@@ -50,7 +54,7 @@ export class Workflow {
     public store: Store,
     private ai: WorkflowAI = liveAI,
   ) {}
-  private finding(id: string, route: Route, reason: string, refs: Evidence[]): Finding {
+  private finding(id: string, route: Route, reason: string, refs: Evidence[], knowledgeTrace?: Finding['knowledgeTrace']): Finding {
     const policy = this.store.policyId(),
       base = criterion(id);
     return {
@@ -62,6 +66,7 @@ export class Workflow {
       route,
       reason,
       evidence: refs,
+      ...(knowledgeTrace && { knowledgeTrace }),
     };
   }
   decidePolicy(d: Draft, prompts: ReturnType<typeof loadPrompts>) {
@@ -72,10 +77,7 @@ export class Workflow {
     if (
       (actor === 'seller' && c.merchant === merchant && !c.twin) ||
       actor === 'auditor' ||
-      (actor === 'maya' &&
-        c.merchant === merchant &&
-        c.assigned === 'Maya' &&
-        expertise.includes(c.category))
+      (actor === 'maya' && assignedToMaya(c))
     )
       return c;
     throw new Fault(404, 'Case unavailable');
@@ -206,6 +208,7 @@ export class Workflow {
     if (d.revision !== revision)
       throw new Fault(409, 'Draft changed. Recheck the current revision.');
     const refs = evidence(this.store, d),
+      knowledge = resolveKnowledgeTrace(d, refs),
       prior = this.store.lastRun(id, revision) ?? this.store.lastRun(id, revision - 1);
     const names = CHECK_IDS.filter(
       (n) => d.placement === 'main' || !['white_background', 'no_overlay'].includes(n),
@@ -218,6 +221,7 @@ export class Workflow {
           this.store.policyId(),
           n,
           d.pimRef,
+          ...(knowledge?.domain.criterionId === n ? [knowledge.domain, contextInstruction] : []),
           n === 'bullet_facts' ? d.bullets : null,
           ['title_facts', 'bullet_facts', 'image_product'].includes(n) ? d.title : null,
           ['image_product', 'white_background', 'no_overlay'].includes(n)
@@ -241,7 +245,7 @@ export class Workflow {
     let response: Awaited<ReturnType<WorkflowAI['decide']>> | undefined;
     if (needed.length) {
       try {
-        response = await this.ai.decide(d, needed, prompts, signal);
+        response = await this.ai.decide(d, needed, prompts, signal, undefined, knowledge);
         trace(this.store, 'model.decisions', start, {
           ...meta,
           model: response.model,
@@ -267,7 +271,8 @@ export class Workflow {
       const cached = prior?.findings.find(
         (f) => f.criterion.id === n && f.dependency === dependencies.get(n),
       );
-      if (cached) return { ...cached, evidence: selected };
+      const knowledgeTrace = knowledge?.domain.criterionId === n ? knowledge : undefined;
+      if (cached) return { ...cached, evidence: selected, knowledgeTrace };
       const p = response!.answers[n];
       if (p === undefined) throw new Fault(503, 'Named check missing');
       const sibling = n === 'image_product' && asset.sku !== null && asset.sku !== d.sku;
@@ -294,9 +299,11 @@ export class Workflow {
               ? rule.remedy
               : 'The evidence is inconclusive. Request clarification.',
           selected,
+          knowledgeTrace,
         ),
         dependency: dependencies.get(n),
-        question: prompts.questions.find((q) => q.name === n)!.instructions,
+        question: prompts.questions.find((q) => q.name === n)!.instructions +
+          (knowledgeTrace ? ' ' + contextInstruction : ''),
         probabilities: p ?? undefined,
       };
     });
@@ -322,6 +329,7 @@ export class Workflow {
             ? 'Approved for this exact SKU and placement.'
             : 'Exact-SKU approval is missing for this placement.',
         [refs[1], refs[2]],
+        knowledge?.domain.criterionId === 'asset_approval' ? knowledge : undefined,
       ),
     );
     const route: Route = findings.some((f) => f.route === 'red')
@@ -411,6 +419,7 @@ export class Workflow {
       revision: d.revision,
       evidence: refs,
       policy: f.policy,
+      knowledgeTrace: f.knowledgeTrace,
     });
     this.store.event(c, source, 'Case opened', report);
     this.store.db.prepare("INSERT INTO jobs(case_id,state) VALUES(?,'queued')").run(c.id);
@@ -434,8 +443,11 @@ export class Workflow {
     });
   }
   private coffeeFinding(d: Draft, refs: Evidence[]) {
+    const knowledge = resolveKnowledgeTrace(d, refs);
+    // This finding controls which dispositions are allowed. Verify the original
+    // claim and exact-SKU exclusion independently of the explanatory mapping.
     const exclusion = d.facts['Espresso function']?.startsWith('Not supported');
-    const claim = d.bullets.some((b) => /brews?[^.!?]*espresso/i.test(b));
+    const claim = espressoBullet(d.bullets);
     const contradiction = claim && exclusion;
     return this.finding(
       'bullet_facts',
@@ -446,6 +458,7 @@ export class Workflow {
           ? 'The current draft contains no affirmative espresso claim to correct.'
           : 'The source does not establish the alleged contradiction.',
       refs.slice(0, 2),
+      knowledge,
     );
   }
   report(id: string, report: string) {
@@ -624,6 +637,7 @@ export class Workflow {
       if (
         !options.includes(b.recommendation) ||
         b.citations.some((ref) => !meta.evidence.includes(ref)) ||
+        (job.finding.knowledgeTrace && !b.citations.includes(job.finding.knowledgeTrace.sourceRef)) ||
         (job.source === 'Shopper report' &&
           !job.finding.evidence.every((e) => b.citations.includes(e.ref)))
       ) {
@@ -664,6 +678,7 @@ export class Workflow {
             ...current.brief,
             caseId: current.id,
             dependencies: meta.evidence,
+            knowledgeTrace: job.finding.knowledgeTrace,
           });
         }
         this.store.saveCase(current, '');

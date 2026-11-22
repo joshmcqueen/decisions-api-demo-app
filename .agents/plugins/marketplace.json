@@ -1,0 +1,12 @@
+{
+  "name": "seller-demo",
+  "interface": { "displayName": "Seller Studio demo" },
+  "plugins": [
+    {
+      "name": "seller-mcp",
+      "source": { "source": "local", "path": "./plugins/seller-mcp" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}

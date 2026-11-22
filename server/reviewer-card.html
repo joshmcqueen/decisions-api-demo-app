@@ -43,6 +43,10 @@
     <h2>Catalog review</h2>
     <blockquote id="claim"></blockquote>
     <p id="report">Loading assigned case…</p>
+    <details id="knowledge" hidden>
+      <summary>Commerce ontology</summary>
+      <p id="meaning"></p><p id="observation"></p><small id="provenance"></small>
+    </details>
     <h3>Prepared recommendation</h3>
     <p id="brief"></p>
     <div id="sources"></div>
@@ -67,8 +71,15 @@
     function render(c) {
       el('sku').textContent = c.sku + ' · revision ' + c.revision;
       el('report').textContent = c.report;
+      const trace = c.finding?.knowledgeTrace;
+      el('knowledge').hidden = !trace;
+      if (trace) {
+        el('meaning').textContent = trace.domain.definition + ' ' + trace.domain.requirement;
+        el('observation').textContent = trace.observation;
+        el('provenance').textContent = trace.domain.version + ' · ' + trace.sourceRef;
+      }
       el('claim').textContent =
-        c.evidence
+        trace?.subject || c.evidence
           .find((e) => e.ref.startsWith('listing/'))
           ?.text.split('\n')
           .slice(1)

@@ -4,7 +4,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { z } from 'zod';
 import { readFileSync } from 'node:fs';
-import { Workflow } from './workflow.ts';
+import { assignedToMaya, Workflow } from './workflow.ts';
 import { actionInput } from './workflow-http.ts';
 import { Fault } from './workflow-db.ts';
 import { trace } from './onsite-tracing.ts';
@@ -48,35 +48,41 @@ export function configuredOAuth(): Auth {
 }
 const uri = 'ui://listing-review/case-v1.html',
   mime = 'text/html;profile=mcp-app';
-export function reviewerMcp(flow: Workflow, auth: Auth) {
+export function reviewerMcp(flow: Workflow, auth: Auth | 'maya-demo') {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '32kb' }));
-  const protectedUrl = new URL('/.well-known/oauth-protected-resource/mcp', auth.resource).href;
-  app.get(
-    ['/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp'],
-    (_req, res) =>
+  if (auth !== 'maya-demo') {
+    const protectedUrl = new URL('/.well-known/oauth-protected-resource/mcp', auth.resource).href;
+    app.get(['/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp'], (_req, res) =>
       res.json({
         resource: auth.resource,
         authorization_servers: [auth.issuer],
         scopes_supported: ['case:read', 'case:write'],
         bearer_methods_supported: ['header'],
       }),
-  );
+    );
+    app.post('/mcp', async (req, res, next) => {
+      const jwt = req.headers.authorization?.match(/^Bearer (\S+)$/i)?.[1];
+      const principal = jwt ? await auth.verify(jwt).catch(() => null) : null;
+      if (!principal || principal.sub !== auth.subject) {
+        res.setHeader('WWW-Authenticate', 'Bearer resource_metadata="' + protectedUrl + '"');
+        res.status(401).end();
+        return;
+      }
+      const scopes = typeof principal.scope === 'string' ? principal.scope.split(' ') : [];
+      if (!scopes.includes('case:read')) {
+        res.status(403).end();
+        return;
+      }
+      res.locals.canWrite = scopes.includes('case:write');
+      next();
+    });
+  }
   app.post('/mcp', async (req, res) => {
-    const jwt = req.headers.authorization?.match(/^Bearer (\S+)$/i)?.[1];
-    const principal = jwt ? await auth.verify(jwt).catch(() => null) : null;
-    if (!principal || principal.sub !== auth.subject) {
-      res.setHeader('WWW-Authenticate', 'Bearer resource_metadata="' + protectedUrl + '"');
-      res.status(401).end();
-      return;
-    }
-    const scopes = typeof principal.scope === 'string' ? principal.scope.split(' ') : [];
-    if (!scopes.includes('case:read')) {
-      res.status(403).end();
-      return;
-    }
-    const server = new McpServer({ name: 'seller-listing-review', version: '1.0.0' });
+    const canWrite = auth !== 'maya-demo' && res.locals.canWrite === true;
+    const server = new McpServer({ name: 'seller-listing-review', version: '1.0.0' },
+      auth === 'maya-demo' ? { instructions: 'Role-play as Maya, the catalog reviewer for this synthetic demo. Use list_cases to find your assigned cases, then get_case and get_evidence to explain the disputed claim. Cite the source references. The presenter confirms dispositions in Seller Studio.' } : undefined);
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
@@ -117,6 +123,17 @@ export function reviewerMcp(flow: Workflow, auth: Auth) {
         };
       }
     };
+    if (auth === 'maya-demo') {
+      server.registerTool('list_cases', {
+        description: 'List the synthetic cases assigned to Maya, including IDs for opening them.',
+        inputSchema: {}, annotations: { readOnlyHint: true },
+      }, () => {
+        const cases = flow.store.cases().filter(assignedToMaya).map(c => ({
+          case_id: c.id, sku: c.sku, source: c.source, status: c.status, report: c.report,
+        }));
+        return { content: [{ type: 'text', text: JSON.stringify(cases) }], structuredContent: { cases } };
+      });
+    }
     server.registerResource('reviewer-card', uri, { mimeType: mime }, async () => ({
       contents: [
         {
@@ -130,7 +147,7 @@ export function reviewerMcp(flow: Workflow, auth: Auth) {
       'get_case',
       {
         description:
-          'Open an assigned catalog case with the prepared brief and current permissions.',
+          'Open an assigned catalog case with its prepared brief, available commerce ontology trace, evidence references and current permissions.',
         inputSchema: { case_id: z.string().uuid() },
         annotations: { readOnlyHint: true },
         _meta: { ui: { resourceUri: uri }, 'openai/outputTemplate': uri },
@@ -138,7 +155,7 @@ export function reviewerMcp(flow: Workflow, auth: Auth) {
       ({ case_id }) =>
         wrap('get_case', case_id, () => {
           const c = flow.read(case_id, 'maya');
-          return { ...c, actions: scopes.includes('case:write') ? c.actions : [] };
+          return { ...c, actions: canWrite ? c.actions : [] };
         }),
     );
     server.registerTool(
@@ -155,7 +172,7 @@ export function reviewerMcp(flow: Workflow, auth: Auth) {
           return { ...item };
         }),
     );
-    if (scopes.includes('case:write'))
+    if (canWrite)
       server.registerTool(
         'submit_case_action',
         {
@@ -179,5 +196,6 @@ export function reviewerMcp(flow: Workflow, auth: Auth) {
     await server.connect(transport);
     await transport.handleRequest(req, res, req.body);
   });
+  app.all('/mcp', (_req, res) => res.set('Allow', 'POST').sendStatus(405));
   return app;
 }

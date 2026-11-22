@@ -1,0 +1,30 @@
+{
+  "version": "commerce-1",
+  "products": {
+    "coffee": {
+      "type": "DripCoffeeMaker",
+      "categoryPath": ["Home & Kitchen", "Coffee Makers"],
+      "concept": "EspressoBrewing"
+    },
+    "headphones": {
+      "type": "WirelessHeadphones",
+      "categoryPath": ["Electronics", "Headphones"],
+      "concept": "VariantMainImage"
+    }
+  },
+  "concepts": {
+    "EspressoBrewing": {
+      "definition": "A claim to brew espresso asserts a beverage-making capability.",
+      "criterionId": "bullet_facts",
+      "requirement": "Check the manufacturer's espresso capability field for this exact SKU.",
+      "source": "pim",
+      "field": "Espresso function"
+    },
+    "VariantMainImage": {
+      "definition": "A main product photo represents a particular sellable variant.",
+      "criterionId": "asset_approval",
+      "requirement": "Check the asset library's approval for the selected image, SKU and placement.",
+      "source": "asset"
+    }
+  }
+}

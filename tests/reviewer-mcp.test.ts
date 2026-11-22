@@ -8,6 +8,42 @@ import { reviewerMcp } from '../server/reviewer-mcp.ts';
 import { Workflow } from '../server/workflow.ts';
 import { Store } from '../server/workflow-db.ts';
 import { controlledAI } from '../eval/scenarios.ts';
+import { createApp } from '../server/app.ts';
+
+it('role-plays Maya over plain HTTP with no credentials on the Seller Studio endpoint', async () => {
+  const store = new Store(':memory:');
+  const workflow = new Workflow(store, controlledAI('mcp'));
+  const coffee = workflow.report('coffee', 'Can it brew espresso?');
+  const hidden = workflow.report('silent', 'Please check the manufacturer record.');
+  await workflow.prepareNext();
+  const server = createApp({ workflow }).listen(0, '127.0.0.1');
+  const client = new Client({ name: 'maya-demo-test', version: '1' });
+  try {
+    await once(server, 'listening');
+    const url = new URL('http://127.0.0.1:' + (server.address() as AddressInfo).port + '/mcp');
+    await client.connect(new StreamableHTTPClientTransport(url));
+    expect(client.getInstructions()).toContain('Role-play as Maya');
+    expect((await client.listTools()).tools.map(tool => tool.name)).toEqual(['list_cases', 'get_case', 'get_evidence']);
+    store.saveCase({ ...hidden, assigned: 'Unassigned' }, 'test-hidden');
+    const queue = await client.callTool({ name: 'list_cases', arguments: {} });
+    expect(queue.structuredContent).toEqual({ cases: [expect.objectContaining({ case_id: coffee.id })] });
+    const opened = await client.callTool({ name: 'get_case', arguments: { case_id: coffee.id } });
+    expect(opened.structuredContent).toMatchObject({ assigned: 'Maya', actions: [] });
+    const evidence = await client.callTool({ name: 'get_evidence', arguments: {
+      case_id: coffee.id, evidence_ref: coffee.evidence[1].ref,
+    } });
+    expect(evidence.structuredContent).toMatchObject({ text: expect.stringContaining('Not supported') });
+    expect((await client.callTool({ name: 'get_case', arguments: { case_id: hidden.id } })).isError).toBe(true);
+    const write = await client.callTool({ name: 'submit_case_action', arguments: {} }).catch(() => ({ isError: true }));
+    expect(write.isError).toBe(true);
+  } finally {
+    await client.close();
+    server.closeAllConnections();
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    store.db.close();
+  }
+});
+
 it('opens the card, reads linked evidence and records one authorized action over MCP', async () => {
   const store = new Store(':memory:'),
     flow = new Workflow(store, controlledAI('mcp')),
@@ -50,7 +86,12 @@ it('opens the card, reads linked evidence and records one authorized action over
     const read = await connect('case:read');
     expect((await read.listTools()).tools.map((t) => t.name)).toEqual(['get_case', 'get_evidence']);
     const ro = await read.callTool({ name: 'get_case', arguments: { case_id: c.id } });
-    expect(ro.structuredContent).toMatchObject({ id: c.id, actions: [] });
+    expect(ro.structuredContent).toMatchObject({
+      id: c.id, actions: [], finding: { knowledgeTrace: {
+        domain: { concept: 'EspressoBrewing', criterionId: 'bullet_facts' },
+        sourceRef: c.evidence[1].ref, listingRef: c.evidence[0].ref,
+      } },
+    });
     const resources = await read.listResources(),
       card = await read.readResource({ uri: resources.resources[0].uri });
     expect(card.contents[0].mimeType).toBe('text/html;profile=mcp-app');

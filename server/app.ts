@@ -1,5 +1,6 @@
 import express from 'express';
 import {router as workflowRouter} from './workflow-http.ts';
+import { reviewerMcp } from './reviewer-mcp.ts';
 import type {Workflow} from './workflow.ts';
 import OpenAI from 'openai';
 import type { DecisionCreateParams } from 'openai/resources/decisions';
@@ -36,7 +37,10 @@ export function createApp(options: { workflow?: Workflow; clientFactory?: (key: 
     next();
   });
   app.use(express.json({ limit: '32kb' }));
-  if(options.workflow) app.use('/api',workflowRouter(options.workflow));
+  if (options.workflow) {
+    app.all('/mcp', reviewerMcp(options.workflow, 'maya-demo'));
+    app.use('/api', workflowRouter(options.workflow));
+  }
   app.get('/api/config', (_req,res) => {
     try {
       const prompts = loadPrompts(options.promptsDirectory);

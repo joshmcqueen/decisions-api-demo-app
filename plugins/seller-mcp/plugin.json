@@ -1,0 +1,17 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "seller-mcp",
+  "version": "1.0.0",
+  "description": "Review synthetic Seller Studio cases as Maya using the running local app.",
+  "author": { "name": "Josh McQueen" },
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true,
+      "interface": {
+        "displayName": "Seller MCP",
+        "shortDescription": "Review local cases as Maya",
+        "defaultPrompt": "As Maya, list my assigned cases and show the evidence behind the coffee maker's espresso claim."
+      }
+    }
+  }
+}

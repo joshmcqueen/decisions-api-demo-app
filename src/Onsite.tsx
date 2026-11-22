@@ -5,7 +5,6 @@ import {
   Layers3,
   ArrowUpRight,
   Activity,
-  ShieldCheck,
   Inbox,
 } from 'lucide-react';
 import {
@@ -89,6 +88,18 @@ function Rule({ f }: { f: Finding }) {
             </a>
           </p>
         )}
+        {f.knowledgeTrace && (
+          <section aria-label="Commerce ontology">
+            <h4>Commerce ontology</h4>
+            <small>{f.knowledgeTrace.domain.categoryPath.join(' / ')} · {f.knowledgeTrace.domain.version}</small>
+            <p><strong>{f.knowledgeTrace.subject}</strong></p>
+            <p>{f.knowledgeTrace.domain.definition} {f.knowledgeTrace.domain.requirement}</p>
+            <p>
+              {f.knowledgeTrace.domain.field && <strong>{f.knowledgeTrace.domain.field} · </strong>}
+              {f.knowledgeTrace.observation}<br /><code>{f.knowledgeTrace.sourceRef}</code>
+            </p>
+          </section>
+        )}
         <h4>What evidence was checked?</h4>
         {f.evidence.map((e) => (
           <details key={e.ref}>
@@ -125,6 +136,64 @@ function Rule({ f }: { f: Finding }) {
         </small>
       </div>
     </details>
+  );
+}
+const fieldLabels = { title: 'title', bullets: 'bullet text', image: 'photo' } as const;
+function FieldFeedback({ field, findings, draft }: {
+  field: keyof typeof fieldLabels;
+  findings: Finding[];
+  draft: Draft;
+}) {
+  const issues = findings.filter(f => f.criterion.field === field);
+  const primary = issues[0];
+  if (!primary) return null;
+  const trace = issues.find(f => f.knowledgeTrace)?.knowledgeTrace;
+  let action = primary.criterion.remedy;
+  let detail = primary.criterion.title;
+  if (primary.criterion.id === 'image_product' && primary.route === 'red' &&
+      draft.sku === 'FORM-H01-BLK' && draft.facts.Color === 'Matte black' &&
+      draft.imageId === 'headphones-cream' && draft.choices.includes('headphones-black')) {
+    action = 'Choose the midnight-black photo';
+    detail = 'The selected photo shows cream headphones. This SKU is matte black.';
+  } else if (primary.criterion.id === 'asset_approval') {
+    action = 'Verify this photo for the selected variant';
+    detail = draft.sku + ' · ' + primary.reason;
+  } else if (primary.route === 'yellow') {
+    action = 'Provide evidence for ' + primary.criterion.title.toLowerCase();
+    detail = primary.reason;
+  }
+  return (
+    <section className="on-field-feedback" aria-label={fieldLabels[field] + ' feedback'}>
+      <div className="on-field-action">
+        <strong>{action}</strong>
+        <p>{detail}</p>
+      </div>
+      <details className="on-feedback-details">
+        <summary>Why this {fieldLabels[field]} was flagged</summary>
+        <dl>
+          {issues.some(f => f.question) && <div>
+            <dt>Decisions API</dt>
+            <dd>{issues.filter(f => f.question).map(f => {
+              const p = f.probabilities;
+              const reading = p && p.mismatch >= f.criterion.red ? 'Mismatch' :
+                p && p.match >= f.criterion.green ? 'Match' : 'Inconclusive';
+              return <div key={f.criterion.id}>{f.criterion.title} · {reading}</div>;
+            })}</dd>
+          </div>}
+          {trace && <>
+            <div><dt>Commerce ontology</dt><dd>{trace.domain.requirement}</dd></div>
+            <div>
+              <dt>{trace.domain.source === 'asset' ? 'Asset library' : 'Manufacturer record'}</dt>
+              <dd>{trace.observation}</dd>
+            </div>
+          </>}
+          {issues.filter(f => !f.question && !f.knowledgeTrace).map(f => (
+            <div key={f.criterion.id}><dt>{f.criterion.title}</dt><dd>{f.reason}</dd></div>
+          ))}
+        </dl>
+        {issues.map(f => <Rule key={f.criterion.id} f={f} />)}
+      </details>
+    </section>
   );
 }
 function SellerRequest({ c, apply }: { c: ReviewCase; apply: (text: string) => void }) {
@@ -317,8 +386,11 @@ function Editor({
     setDraft((prev) => ({ ...prev, ...patch }));
   }
   const selected = space.assets.find((a) => a.id === draft.imageId)!;
-  const unresolved = run?.findings.filter((f) => f.route !== 'green') ?? [];
-  const first = unresolved.find((f) => f.route === 'red') ?? unresolved[0];
+  const unresolved = (run?.findings ?? []).filter(f => f.route !== 'green').sort((a, b) =>
+    Number(b.route === 'red') - Number(a.route === 'red') ||
+    (a.route === 'yellow' ? Number(Boolean(b.knowledgeTrace)) - Number(Boolean(a.knowledgeTrace)) : 0));
+  const first = unresolved[0];
+  const cleared = run?.findings.filter(f => f.route === 'green') ?? [];
   return (
     <div className="on-content">
       <section className="on-panel">
@@ -337,6 +409,7 @@ function Editor({
               Product title
               <input value={draft.title} onChange={(e) => edit({ title: e.target.value })} />
             </label>
+            <FieldFeedback field="title" findings={unresolved} draft={draft} />
             <h4>Bullet points</h4>
             {draft.bullets.map((b, i) => (
               <label key={i}>
@@ -350,13 +423,7 @@ function Editor({
                 />
               </label>
             ))}
-            {unresolved
-              .filter((f) => f.criterion.field === 'bullets')
-              .map((f) => (
-                <p key={f.criterion.id} className="on-inline">
-                  {f.reason}
-                </p>
-              ))}
+            <FieldFeedback field="bullets" findings={unresolved} draft={draft} />
             {run?.findings.some((f) => f.criterion.id === 'bullet_refund' && f.route === 'red') && (
               <button
                 onClick={() =>
@@ -399,23 +466,8 @@ function Editor({
                 );
               })}
             </div>
-            {unresolved
-              .filter((f) => f.criterion.field === 'image')
-              .map((f) => (
-                <p className="on-inline" key={f.criterion.id}>
-                  {f.reason}
-                </p>
-              ))}
+            <FieldFeedback field="image" findings={unresolved} draft={draft} />
           </div>
-        </div>
-      </section>
-      <section className="on-panel">
-        <div className="on-section">
-          <div>
-            <small>Revision {saved.current.revision}</small>
-            <h2>Listing findings</h2>
-          </div>
-          <ShieldCheck size={23} />
         </div>
         {message && (
           <p role="status">
@@ -424,18 +476,10 @@ function Editor({
         )}
         {run && (
           <>
-            <p className="on-lead">
-              {run.route === 'green' ? 'Ready for the next submission step.' : first?.reason}
-            </p>
-            {[...run.findings]
-              .sort(
-                (a, b) =>
-                  Number(b.route === 'red') - Number(a.route === 'red') ||
-                  Number(b.route === 'yellow') - Number(a.route === 'yellow'),
-              )
-              .map((f) => (
-                <Rule key={f.criterion.id} f={f} />
-              ))}
+            {cleared.length > 0 && <details className="on-cleared-checks">
+              <summary>{cleared.length} cleared {cleared.length === 1 ? 'check' : 'checks'} <small>Revision {run.revision}</small></summary>
+              {cleared.map(f => <Rule key={f.criterion.id} f={f} />)}
+            </details>}
             {first && (
               <button className="on-primary" onClick={() => help(!showHelp)}>
                 Request specialist help
@@ -605,6 +649,7 @@ function CaseView({
               revision: c.revision,
               report: c.report,
               brief: b,
+              knowledge_trace: c.finding.knowledgeTrace,
               evidence: c.evidence.map(({ ref, text, label }) => ({ ref, text, label })),
             },
             null,

@@ -40,16 +40,31 @@ test('seller correction, assigned exception, reviewer receipt and revalidation',
     await expect(state('Cleared')).toBeVisible({ timeout: 40000 });
     await page.getByRole('button', { name: 'Use Warm cream' }).click();
     await expect(state('Correction needed')).toBeVisible({ timeout: 40000 });
+    const photo = page.getByRole('region', { name: 'photo feedback' });
+    await expect(photo.getByText('Choose the midnight-black photo')).toBeVisible();
+    await expect(photo.locator('.on-field-action')).toHaveCount(1);
+    await expect(photo.getByText('Decisions API', { exact: true })).toBeHidden();
+    await photo.getByText('Why this photo was flagged').click();
+    await expect(photo.getByText('Decisions API', { exact: true })).toBeVisible();
+    await expect(photo.getByText('Asset library', { exact: true })).toBeVisible();
+    await expect(page.locator('.on-cleared-checks')).not.toHaveAttribute('open', '');
     await page.getByRole('button', { name: 'Use Midnight black' }).click();
     await expect(state('Cleared')).toBeVisible({ timeout: 40000 });
+    await expect(photo).toHaveCount(0);
     expect(store.cases().filter((c) => c.source === 'Seller request')).toHaveLength(0);
     await page.getByRole('button', { name: /Promotional main photo/ }).click();
     await expect(state('Correction needed')).toBeVisible({ timeout: 40000 });
+    await photo.getByText('Why this photo was flagged').click();
     await page.locator('summary').filter({ hasText: 'Added artwork on the main image' }).click();
     await expect(page.getByRole('link', { name: 'Public Amazon source' })).toBeVisible();
     await page.getByRole('button', { name: 'Use Clean product photo' }).click();
     await expect(state('Cleared')).toBeVisible({ timeout: 40000 });
     await page.getByRole('button', { name: /Graphite headphone variant/ }).click();
+    await photo.getByText('Why this photo was flagged').click();
+    await page.locator('summary').filter({ hasText: 'Variant and placement approval' }).click();
+    const knowledge = page.getByRole('region', { name: 'Commerce ontology' });
+    await expect(knowledge).toContainText('Main photo for FORM-H01-GPH');
+    await expect(knowledge).toContainText('Approved for FORM-H01-BLK / main');
     await expect(state('Evidence needed')).toBeVisible({ timeout: 40000 });
     await page.getByRole('button', { name: 'Request specialist help' }).click();
     await page
@@ -60,6 +75,8 @@ test('seller correction, assigned exception, reviewer receipt and revalidation',
     await page.getByRole('button', { name: 'Reviewer queue' }).click();
     await expect(page.locator('.on-case')).toHaveCount(3);
     await page.getByRole('button', { name: /Shopper report/ }).click();
+    await page.locator('summary').filter({ hasText: 'Product capability' }).click();
+    await expect(knowledge).toContainText('Not supported');
     await expect(page.getByRole('button', { name: 'Review in ChatGPT' })).toBeVisible();
     await page.getByRole('button', { name: 'Send correction request', exact: true }).click();
     await page.getByRole('button', { name: 'Confirm decision' }).click();
@@ -78,6 +95,9 @@ test('seller correction, assigned exception, reviewer receipt and revalidation',
     });
     await page.getByRole('button', { name: 'Reviewer queue' }).click();
     await page.getByRole('button', { name: /Same report, manufacturer silent/ }).click();
+    const silentRule = page.locator('details.on-rule').filter({ hasText: 'Product capability' });
+    if (await silentRule.getAttribute('open') === null) await silentRule.locator('summary').first().click();
+    await expect(knowledge).toContainText('Undocumented in this manufacturer record.');
     await expect(page.getByRole('heading', { name: 'Request more evidence' })).toBeVisible();
     await expect(
       page.getByRole('button', { name: 'Send correction request', exact: true }),

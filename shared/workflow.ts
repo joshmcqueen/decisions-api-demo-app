@@ -46,6 +46,7 @@ export interface Evidence {
   image?: string;
 }
 export interface Finding {
+  knowledgeTrace?: KnowledgeTrace;
   criterion: Criterion;
   policy: string;
   route: Route;
@@ -54,6 +55,23 @@ export interface Finding {
   question?: string;
   probabilities?: Record<Outcome, number>;
   dependency?: string;
+}
+export interface KnowledgeTrace {
+  domain: {
+    version: string;
+    productType: string;
+    categoryPath: string[];
+    concept: string;
+    definition: string;
+    criterionId: string;
+    requirement: string;
+    source: 'pim' | 'asset';
+    field?: string;
+  };
+  subject: string;
+  listingRef: string;
+  sourceRef: string;
+  observation: string;
 }
 export interface Validation {
   id: string;

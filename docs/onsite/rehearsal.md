@@ -14,6 +14,19 @@ For a connected rehearsal, configure the external issuer and dedicated HTTPS MCP
 
 **Reset.** The prepared database is ready for the onsite. With both local processes stopped, `npm run onsite:restore` archives the completed run and restores the starting cases and private conversation bindings. `npm run onsite:checkpoint` creates a fresh checkpoint from the three Ready starting cases. To create a fresh scenario, stop the API and MCP listener, then run `npm run onsite:reset`. The command archives the original dedicated database and seeds fresh case IDs. Prepare and bind new conversations after a reset. To rehearse against copies while preserving the private chat bindings, use SQLite’s backup facility with both processes stopped and set `ONSITE_DB` to the copy.
 
+### Commerce ontology walkthrough · 45 seconds
+
+Use a fresh rehearsal database for these findings. From the repo root, run
+`ONSITE_DB=tmp/onsite/ontology-demo.sqlite npm run onsite:prepare`, then
+`ONSITE_DB=tmp/onsite/ontology-demo.sqlite npm run dev`. Preparation calls the live APIs on first use.
+Set the same `ONSITE_DB` for the MCP listener when using a connected handoff. Previously bound conversations retain their original briefs.
+
+1. In **Seller studio → Graphite headphone variant**, expand **Why this photo was flagged**. Compare the requested graphite SKU with the matte-black SKU approved by the asset library. Request specialist help to carry that reference into Maya’s case.
+2. In **Reviewer queue**, open the coffee shopper report and expand **Product capability**. Ask Maya “Which capability does this bullet claim, and which manufacturer field settles it?” The espresso claim selects the exact-SKU manufacturer specification. Open the cited field and read the explicit exclusion.
+3. Open **Same report, manufacturer silent**. The policy and capability are identical. The manufacturer reference changes and the field is absent. Maya can request substantiation.
+
+In one fresh live Decisions call per fixture, the explicit coffee bullet routed red (3,070 input tokens, 1.95 s), the silent record yellow (3,050 tokens, 1.65 s), and graphite's separate asset check yellow (the accompanying Decisions call used 2,299 tokens, 0.82 s). Maya's live briefs recommended correction for the explicit claim and additional evidence for the other two. These are single rehearsal observations.
+
 ### Verified API measurements
 
 | Final release fixture | Returned model | Input / cached / output tokens | Estimated USD |
@@ -35,8 +48,8 @@ Start with the seller workflow Amazon already supports. Show the photo check dur
 
 | Clock | Presenter action | Customer decision or evidence |
 |---|---|---|
-| 0:00–2:15 | Seller studio → Matte-black headphones. Select **Warm cream**, pause, expand **Product and color**. Point to all three named probabilities and the selected source records. Select **Midnight black**. | FORM-H01-BLK clears after an edit. Neither the mismatch nor the fix creates a specialist case. |
-| 2:15–3:45 | Open **Promotional main photo**. Expand **Added artwork on the main image**, inspect the badge, confirm Main placement, and select **Clean product photo**. | The seller can see the criterion, check, remedy and owner. An integral embroidered mark has a separate observation. A secondary placement requires its applicable checks. The refund example is available in its own draft for Q&A. |
+| 0:00–2:15 | Seller studio → Matte-black headphones. Select **Warm cream**, pause, open **Why this photo was flagged → Product and color**. Point to all three named probabilities and the selected source records. Select **Midnight black**. | FORM-H01-BLK clears after an edit. Neither the mismatch nor the fix creates a specialist case. |
+| 2:15–3:45 | Open **Promotional main photo**. Open **Why this photo was flagged → Added artwork on the main image**, inspect the badge, confirm Main placement, and select **Clean product photo**. | The seller can see the criterion, check, remedy and owner. An integral embroidered mark has a separate observation. A secondary placement requires its applicable checks. The refund example is available in its own draft for Q&A. |
 | 3:45–5:30 | Open **Graphite headphone variant**. Choose **Request specialist help**. Enter “Can I use this family photo for this SKU?” and **Send request**. | The asset belongs to a sibling variant. One case preserves the question, revision and evidence. Read its status from the seller timeline. |
 | 5:30–7:00 | Open **Reviewer queue**. Show all three entries. Select the merchant case and expand its submission history. | Two distinct submissions to the en-US feed produced a single assigned case. A transport retry replays the original result. Maya sees merchant configuration separately from Amazon policy. |
 | 7:00–10:30 | Select the COM-D08-RED shopper report. Read the disputed bullet and the original allegation. Choose **Review in ChatGPT**. Ask “What evidence would justify asking this seller to change the espresso claim?” Open the exact-SKU source on the local evidence page or connected card. | The independent manufacturer record explicitly excludes espresso. The published claim supplies the other half of the contradiction. Pause for a customer question. |
