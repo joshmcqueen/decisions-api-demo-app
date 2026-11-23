@@ -1,5 +1,6 @@
 import { it, expect } from 'vitest';
 import { once } from 'node:events';
+import { request } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { generateKeyPair, SignJWT, jwtVerify } from 'jose';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -9,6 +10,9 @@ import { Workflow } from '../server/workflow.ts';
 import { Store } from '../server/workflow-db.ts';
 import { controlledAI } from '../eval/scenarios.ts';
 import { createApp } from '../server/app.ts';
+import { frenchBullets } from '../server/onsite-runtime.ts';
+import desktopPlugin from '../plugins/seller-mcp/mcp.json' with { type: 'json' };
+import type { ReviewCase } from '../shared/workflow.ts';
 
 it('role-plays Maya over plain HTTP with no credentials on the Seller Studio endpoint', async () => {
   const store = new Store(':memory:');
@@ -36,6 +40,66 @@ it('role-plays Maya over plain HTTP with no credentials on the Seller Studio end
     expect((await client.callTool({ name: 'get_case', arguments: { case_id: hidden.id } })).isError).toBe(true);
     const write = await client.callTool({ name: 'submit_case_action', arguments: {} }).catch(() => ({ isError: true }));
     expect(write.isError).toBe(true);
+  } finally {
+    await client.close();
+    server.closeAllConnections();
+    await new Promise<void>(resolve => server.close(() => resolve()));
+    store.db.close();
+  }
+});
+
+it('sends one merchant correction from the desktop plugin and returns the seller receipt', async () => {
+  const store = new Store(':memory:');
+  const english = 'Please resubmit these bullets in English to the en-US feed:\n- Wireless listening via Bluetooth\n- Comfortable ear cushions\n- Headphones and a charging cable included';
+  const ai = controlledAI('mcp');
+  const flow = new Workflow(store, {
+    ...ai,
+    async prepare(...args) {
+      const prepared = await ai.prepare(...args);
+      prepared.result.suggestedText = english;
+      return prepared;
+    },
+  });
+  await flow.submitFeed('first', frenchBullets, 'agent');
+  const { caseId } = await flow.submitFeed('second', frenchBullets, 'agent');
+  await flow.prepareNext();
+  const server = createApp({ workflow: flow }).listen(0, '127.0.0.1');
+  const client = new Client({ name: 'desktop-plugin', version: '1' });
+  try {
+    await once(server, 'listening');
+    const url = new URL(desktopPlugin.mcpServers['seller-review'].url);
+    url.port = String((server.address() as AddressInfo).port);
+    const remoteHeaders: Record<string, string>[] = [
+      { Origin: 'https://example.org' }, { Host: 'example.org' }, { Forwarded: 'proto=https' },
+    ];
+    for (const headers of remoteHeaders) {
+      const req = request(url, { method: 'POST', headers });
+      req.end();
+      const [response] = await once(req, 'response');
+      response.resume();
+      expect(response.statusCode, Object.keys(headers)[0]).toBe(403);
+    }
+    await client.connect(new StreamableHTTPClientTransport(url));
+    expect((await client.listTools()).tools.map(t => t.name)).toEqual([
+      'list_cases', 'get_case', 'get_evidence', 'submit_case_action',
+    ]);
+    const opened = await client.callTool({ name: 'get_case', arguments: { case_id: caseId } });
+    const c = opened.structuredContent as unknown as ReviewCase;
+    expect(c.actions).toContain('send_correction');
+    expect(c.brief).toMatchObject({ recommendation: 'send_correction', suggestedText: english });
+    const args = {
+      case_id: c.id, action: c.brief!.recommendation, expected_case_version: c.version,
+      expected_listing_revision: c.revision, brief_id: c.brief!.id, idempotency_key: 'confirmed-correction',
+    };
+    const submit = (overrides = {}) =>
+      client.callTool({ name: 'submit_case_action', arguments: { ...args, ...overrides } });
+    expect((await submit({ expected_listing_revision: c.revision + 1 })).structuredContent).toEqual({ status: 409 });
+    const receipt = (await submit()).structuredContent;
+    expect(receipt).toMatchObject({ status: 'Correction requested', actor: 'Maya', caseId: c.id });
+    expect((await submit()).structuredContent).toEqual(receipt);
+    const events = flow.read(c.id, 'seller').events.filter(e => e.label === 'Correction requested');
+    expect(events).toHaveLength(1);
+    expect(JSON.parse(events[0].detail)).toMatchObject({ suggestedText: english, brief: c.brief!.id });
   } finally {
     await client.close();
     server.closeAllConnections();

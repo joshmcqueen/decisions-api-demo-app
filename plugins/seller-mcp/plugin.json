@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "seller-mcp",
-  "version": "1.0.0",
-  "description": "Review synthetic Seller Studio cases as Maya using the running local app.",
+  "version": "1.1.0",
+  "description": "Review assigned Seller Studio cases as Maya and record confirmed decisions in the local demo.",
   "author": { "name": "Josh McQueen" },
   "extensions": {
     "com.openai": {

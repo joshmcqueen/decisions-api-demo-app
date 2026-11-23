@@ -74,7 +74,23 @@ test('seller correction, assigned exception, reviewer receipt and revalidation',
     await expect(page.getByText('Case opened', { exact: true })).toBeVisible();
     await page.getByRole('button', { name: 'Reviewer queue' }).click();
     await expect(page.locator('.on-case')).toHaveCount(3);
-    await page.getByRole('button', { name: /Shopper report/ }).click();
+    await page.getByRole('button', { name: 'Seller studio' }).click();
+    await page.getByRole('button', { name: /Refund guarantee bullet/ }).click();
+    await page.getByRole('button', { name: 'Request specialist help' }).click();
+    await page.getByLabel('Question for the reviewer').fill('Can I offer a full refund?');
+    await page.getByRole('button', { name: 'Send request' }).click();
+    await expect(page.getByText('Case opened', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Reviewer queue' }).click();
+    const coffeeGroup = page.getByRole('region', { name: 'COM-D08-RED' });
+    await expect(coffeeGroup.getByText('Daily Drip Coffee Maker')).toBeVisible();
+    await expect(coffeeGroup.getByText('2 cases')).toBeVisible();
+    const refund = coffeeGroup.getByRole('button', { name: /Refund guarantee in bullet/ });
+    const espresso = coffeeGroup.getByRole('button', { name: /Espresso capability disputed/ });
+    const compare = page.getByRole('button', { name: 'What if the manufacturer record omitted espresso?' });
+    await refund.click();
+    await expect(page.getByText('Can I offer a full refund?', { exact: true }).first()).toBeVisible();
+    await expect(compare).toHaveCount(0);
+    await espresso.click();
     await page.locator('summary').filter({ hasText: 'Product capability' }).click();
     await expect(knowledge).toContainText('Not supported');
     await expect(page.getByRole('button', { name: 'Review in ChatGPT' })).toBeVisible();
@@ -94,7 +110,9 @@ test('seller correction, assigned exception, reviewer receipt and revalidation',
       timeout: 40000,
     });
     await page.getByRole('button', { name: 'Reviewer queue' }).click();
-    await page.getByRole('button', { name: /Same report, manufacturer silent/ }).click();
+    await compare.click();
+    await expect(coffeeGroup.getByRole('button')).toHaveCount(2);
+    await expect(espresso).toHaveAttribute('aria-current', 'true');
     const silentRule = page.locator('details.on-rule').filter({ hasText: 'Product capability' });
     if (await silentRule.getAttribute('open') === null) await silentRule.locator('summary').first().click();
     await expect(knowledge).toContainText('Undocumented in this manufacturer record.');
@@ -102,6 +120,8 @@ test('seller correction, assigned exception, reviewer receipt and revalidation',
     await expect(
       page.getByRole('button', { name: 'Send correction request', exact: true }),
     ).toBeDisabled();
+    await page.getByRole('button', { name: 'Return to original shopper report' }).click();
+    await expect(page.getByRole('heading', { name: 'Espresso capability disputed' })).toBeVisible();
     await page.getByRole('button', { name: 'Pilot impact' }).click();
     await expect(page.getByText('$2,400,000', { exact: true })).toBeVisible();
     await expect(page.getByText(/recorded active reviewer minutes/)).toBeVisible();

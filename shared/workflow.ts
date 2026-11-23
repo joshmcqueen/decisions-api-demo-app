@@ -104,6 +104,7 @@ export interface CaseEvent {
   detail: string;
 }
 export interface ReviewCase {
+  productName?: string;
   preparedChatUrl?: string;
   id: string;
   draftId: string;

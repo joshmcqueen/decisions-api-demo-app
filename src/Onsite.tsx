@@ -528,11 +528,37 @@ function Editor({
   );
 }
 
+function issueTitle(c: ReviewCase) {
+  const { criterion, knowledgeTrace } = c.finding;
+  if (criterion.id === 'bullet_refund') return 'Refund guarantee in bullet';
+  if (criterion.id === 'bullet_facts' && knowledgeTrace?.domain.field === 'Espresso function')
+    return 'Espresso capability disputed';
+  return criterion.title;
+}
+
 function Reviewer({ space, update }: { space: Workspace; update: () => Promise<void> }) {
-  const [id, select] = useState(sessionStorage.getItem('selected-case') || ''),
-    [twin, setTwin] = useState(sessionStorage.getItem('silent-twin') === 'true');
-  const list = space.cases.filter((c) => c.twin === twin),
-    c = list.find((c) => c.id === id) ?? list[0];
+  const [id, select] = useState(sessionStorage.getItem('selected-case') || '');
+  const [showComparison, setShowComparison] = useState(sessionStorage.getItem('silent-twin') === 'true');
+  const assigned = space.cases.filter(c => !c.twin);
+  const groups = new Map<string, ReviewCase[]>();
+  for (const item of assigned) {
+    const group = groups.get(item.sku);
+    if (group) group.push(item);
+    else groups.set(item.sku, [item]);
+  }
+  const selected = assigned.find(c => c.id === id) ?? assigned[0];
+  const comparison = selected?.source === 'Shopper report' && selected.draftId === 'coffee'
+    ? space.cases.find(c => c.twin && c.source === selected.source &&
+        c.sku === selected.sku && c.report === selected.report)
+    : undefined;
+  const current = showComparison && comparison ? comparison : selected;
+
+  function openCase(item: ReviewCase, compare = false) {
+    sessionStorage.setItem('selected-case', item.id);
+    sessionStorage.setItem('silent-twin', String(compare));
+    select(item.id);
+    setShowComparison(compare);
+  }
   return (
     <>
       <div className="on-title">
@@ -544,44 +570,35 @@ function Reviewer({ space, update }: { space: Workspace; update: () => Promise<v
         <span className="on-identity">Maya · Reviewer</span>
       </div>
       <div className="on-layout">
-        <aside className="on-panel">
-          <h3>
-            Assigned to me <small>{list.length}</small>
-          </h3>
-          {list.map((item) => (
-            <button
-              className={'on-case ' + (c?.id === item.id ? 'sel' : '')}
-              key={item.id}
-              onClick={() => {
-                sessionStorage.setItem('selected-case', item.id);
-                select(item.id);
-              }}
-            >
-              <small>{item.source}</small>
-              <b>{item.sku}</b>
-              <span>
-                {item.status} · {item.prep}
-              </span>
-              <small>
-                Opened {Math.max(0, Math.floor((Date.now() - Date.parse(item.created)) / 60000))}{' '}
-                min ago
-              </small>
-            </button>
+        <aside className="on-panel on-queue" aria-label="Assigned cases">
+          <h3>Assigned to me <small>{assigned.length}</small></h3>
+          {Array.from(groups, ([sku, items]) => (
+            <section key={sku} className="on-case-group" aria-label={sku}>
+              <h4>{items[0].productName ?? sku}</h4>
+              <div className="on-group-meta">
+                {items[0].productName && <span>{sku}</span>}
+                <span>{items.length} {items.length === 1 ? 'case' : 'cases'}</span>
+              </div>
+              {items.map(item => (
+                <button
+                  key={item.id}
+                  className={'on-case' + (selected.id === item.id ? ' sel' : '')}
+                  aria-current={selected.id === item.id ? 'true' : undefined}
+                  onClick={() => openCase(item)}
+                >
+                  <b>{issueTitle(item)}</b>
+                  <span>{item.source} · {item.status}</span>
+                  <small>Brief {item.prep.toLowerCase()} · <time dateTime={item.created}>
+                    {new Date(item.created).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                  </time></small>
+                </button>
+              ))}
+            </section>
           ))}
-          <button
-            className="on-link"
-            onClick={() => {
-              sessionStorage.setItem('silent-twin', String(!twin));
-              sessionStorage.removeItem('selected-case');
-              setTwin(!twin);
-              select('');
-            }}
-          >
-            {twin ? 'Return to assigned queue' : 'Same report, manufacturer silent'} →
-          </button>
         </aside>
-        {c ? (
-          <CaseView key={c.id} c={c} space={space} update={update} />
+        {current ? (
+          <CaseView key={current.id} c={current} space={space} update={update}
+            onCompare={comparison ? () => openCase(selected, !showComparison) : undefined} />
         ) : (
           <p>No assigned cases.</p>
         )}
@@ -593,10 +610,12 @@ function CaseView({
   c,
   space,
   update,
+  onCompare,
 }: {
   c: ReviewCase;
   space: Workspace;
   update: () => Promise<void>;
+  onCompare?: () => void;
 }) {
   const [message, setMessage] = useState(''),
     [confirm, setConfirm] = useState<Action>(),
@@ -704,7 +723,7 @@ function CaseView({
             <small>
               {c.source} / {c.sku} / revision {c.revision}
             </small>
-            <h2>{c.twin ? 'Manufacturer record is silent' : c.finding.criterion.title}</h2>
+            <h2>{c.twin ? 'Manufacturer record is silent' : issueTitle(c)}</h2>
           </div>
           <Badge value={c.status} />
         </div>
@@ -733,6 +752,11 @@ function CaseView({
             {e.image && <img className="on-source-photo" src={e.image} alt="Case evidence" />}
           </details>
         ))}
+        {onCompare && (
+          <button className="on-comparison" onClick={onCompare}>
+            {c.twin ? 'Return to original shopper report' : 'What if the manufacturer record omitted espresso?'}
+          </button>
+        )}
         <Rule f={c.finding} />
         {c.attempts.length > 0 && (
           <details>

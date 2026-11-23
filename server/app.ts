@@ -39,6 +39,7 @@ export function createApp(options: { workflow?: Workflow; clientFactory?: (key: 
   app.use(express.json({ limit: '32kb' }));
   if (options.workflow) {
     app.all('/mcp', reviewerMcp(options.workflow, 'maya-demo'));
+    app.use('/local', reviewerMcp(options.workflow, 'maya-desktop'));
     app.use('/api', workflowRouter(options.workflow));
   }
   app.get('/api/config', (_req,res) => {

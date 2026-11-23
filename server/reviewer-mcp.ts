@@ -48,11 +48,23 @@ export function configuredOAuth(): Auth {
 }
 const uri = 'ui://listing-review/case-v1.html',
   mime = 'text/html;profile=mcp-app';
-export function reviewerMcp(flow: Workflow, auth: Auth | 'maya-demo') {
+export function reviewerMcp(flow: Workflow, auth: Auth | 'maya-demo' | 'maya-desktop') {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '32kb' }));
-  if (auth !== 'maya-demo') {
+  if (auth === 'maya-desktop') {
+    app.use((req, res, next) => {
+      const peer = req.socket.remoteAddress;
+      if (
+        !['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(peer ?? '') ||
+        !['127.0.0.1', 'localhost', '[::1]'].includes(req.hostname) ||
+        Object.keys(req.headers).some(h => h === 'forwarded' || h.startsWith('x-forwarded-')) ||
+        req.headers['sec-fetch-site'] === 'cross-site' ||
+        (req.headers.origin !== undefined && req.headers.origin !== 'http://' + req.get('host'))
+      ) return res.status(403).end();
+      next();
+    });
+  } else if (typeof auth !== 'string') {
     const protectedUrl = new URL('/.well-known/oauth-protected-resource/mcp', auth.resource).href;
     app.get(['/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp'], (_req, res) =>
       res.json({
@@ -80,9 +92,16 @@ export function reviewerMcp(flow: Workflow, auth: Auth | 'maya-demo') {
     });
   }
   app.post('/mcp', async (req, res) => {
-    const canWrite = auth !== 'maya-demo' && res.locals.canWrite === true;
-    const server = new McpServer({ name: 'seller-listing-review', version: '1.0.0' },
-      auth === 'maya-demo' ? { instructions: 'Role-play as Maya, the catalog reviewer for this synthetic demo. Use list_cases to find your assigned cases, then get_case and get_evidence to explain the disputed claim. Cite the source references. The presenter confirms dispositions in Seller Studio.' } : undefined);
+    const canWrite = auth === 'maya-desktop' || res.locals.canWrite === true;
+    const instructions = [
+      'Role-play as Maya, the catalog reviewer for this synthetic demo.',
+      typeof auth === 'string' ? 'Use list_cases to find your assigned cases.' : '',
+      'Use get_case and get_evidence to explain the disputed claim. Cite the source references.',
+      canWrite
+        ? 'Show the prepared recommendation and any suggested correction text. When the reviewer explicitly asks to take that action, call submit_case_action using the case version, listing revision and brief ID they reviewed. Report the returned receipt. If the brief is stale, show the updated recommendation for confirmation.'
+        : 'This connection has read access. The presenter confirms dispositions in Seller Studio.',
+    ].filter(Boolean).join(' ');
+    const server = new McpServer({ name: 'seller-listing-review', version: '1.1.0' }, { instructions });
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,
@@ -123,7 +142,7 @@ export function reviewerMcp(flow: Workflow, auth: Auth | 'maya-demo') {
         };
       }
     };
-    if (auth === 'maya-demo') {
+    if (typeof auth === 'string') {
       server.registerTool('list_cases', {
         description: 'List the synthetic cases assigned to Maya, including IDs for opening them.',
         inputSchema: {}, annotations: { readOnlyHint: true },
@@ -177,7 +196,7 @@ export function reviewerMcp(flow: Workflow, auth: Auth | 'maya-demo') {
         'submit_case_action',
         {
           description:
-            'After reviewer confirmation, record one disposition for the specified case revision.',
+            'Record the explicitly confirmed disposition using version, revision, and brief.id from get_case. The seller receives the prepared correction text for send_correction. Reuse the same idempotency_key when retrying the same request.',
           inputSchema: actionInput.extend({ case_id: z.string().uuid() }),
           annotations: {
             readOnlyHint: false,

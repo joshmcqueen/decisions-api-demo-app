@@ -171,6 +171,28 @@
 .on-case span {
   font-size: 12px;
 }
+.on-queue > h3, .on-group-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.on-case-group {
+  border-top: 1px solid #d7dcd8;
+  padding: 12px 0 4px;
+  width: 100%;
+}
+.on-case-group h4 { margin: 0 0 3px; }
+.on-group-meta { color: #58666c; font-size: 12px; margin-bottom: 8px; }
+.on-group-meta span:last-child { white-space: nowrap; }
+.on-comparison {
+  display: block;
+  margin: 12px 0;
+  color: #126171;
+  text-align: left;
+  text-decoration: underline;
+  font-size: 14px;
+}
 .on-fields,
 .on-columns {
   display: grid;
@@ -309,8 +331,7 @@
 }
 .on-primary,
 .on-actions button,
-.on-confirm button,
-.on-link {
+.on-confirm button {
   border-radius: 7px;
   padding: 8px 12px;
   border: 1px solid #c4cdca;
@@ -454,8 +475,7 @@
   .on-layout aside h3 {
     width: 100%;
   }
-  .on-product,
-  .on-case {
+  .on-product {
     width: 48%;
     padding: 5px;
   }

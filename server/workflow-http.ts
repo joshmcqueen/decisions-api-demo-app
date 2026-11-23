@@ -116,12 +116,13 @@ export function router(flow: Workflow) {
     const plugin = process.env.ONSITE_PLUGIN_URL ?? '';
     if (role === 'maya')
       cases = cases.map((c) => {
-        if (!c.brief || c.prep !== 'Ready' || flow.store.draft(c.draftId).revision !== c.revision)
-          return c;
+        const draft = flow.store.draft(c.draftId);
+        const item = { ...c, productName: draft.name };
+        if (!c.brief || c.prep !== 'Ready' || draft.revision !== c.revision) return item;
         const row = flow.store.db
           .prepare('SELECT url FROM prepared_chats WHERE case_id=? AND brief_id=? AND revision=?')
           .get(c.id, c.brief.id, c.revision);
-        return row ? { ...c, preparedChatUrl: String(row.url) } : c;
+        return row ? { ...item, preparedChatUrl: String(row.url) } : item;
       });
     res.json({
       role,
