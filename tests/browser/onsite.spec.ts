@@ -123,8 +123,24 @@ test('seller correction, assigned exception, reviewer receipt and revalidation',
     await page.getByRole('button', { name: 'Return to original shopper report' }).click();
     await expect(page.getByRole('heading', { name: 'Espresso capability disputed' })).toBeVisible();
     await page.getByRole('button', { name: 'Pilot impact' }).click();
-    await expect(page.getByText('$2,400,000', { exact: true })).toBeVisible();
-    await expect(page.getByText(/recorded active reviewer minutes/)).toBeVisible();
+    const impact = page.getByRole('region', { name: 'Modeled annual impact' });
+    await expect(impact.getByText('$4.8M', { exact: true })).toBeVisible();
+    await expect(impact.getByText('80,000 reviewer hours freed at $60/hour')).toBeVisible();
+    for (const hours of ['200,000', '160,000', '120,000']) {
+      await expect(impact.getByText(hours, { exact: true })).toBeVisible();
+    }
+    await expect(page.getByText('$2.4M', { exact: true })).toHaveCount(2);
+    await expect(page.getByText('Review assignments')).toHaveCount(0);
+    await expect(page.getByLabel('Baseline review rate (%)')).toBeHidden();
+    await page.getByText('Edit scenario assumptions').click();
+    await expect(page.getByLabel('Baseline review rate (%)')).toHaveValue('5');
+    await expect(page.getByRole('link', { name: 'Amazon’s 2025 report' })).toBeVisible();
+    await page.getByLabel('Pilot review rate (%)').fill('5');
+    await expect(impact.getByText('$3M', { exact: true })).toBeVisible();
+    await page.getByLabel('Prepared minutes per case').fill('20');
+    await expect(impact.getByText('$0', { exact: true })).toBeVisible();
+    await page.getByLabel('Annual AI and operating costs ($)').fill('100000');
+    await expect(impact.getByText('-$100K', { exact: true })).toBeVisible();
     await page.getByLabel('Technical workspaces').selectOption('engineer');
     await expect(page.getByText('Candidate with the missing-evidence error')).toBeVisible();
     await expect(page.getByRole('link', { name: 'Open private LangSmith trace' })).toHaveCount(2);
